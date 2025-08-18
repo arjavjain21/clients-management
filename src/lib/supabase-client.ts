@@ -56,11 +56,19 @@ export const clientsApi = {
     }
     
     if (filters.assigned_account_manager_id) {
-      query = query.eq('assigned_account_manager_id', filters.assigned_account_manager_id);
+      if (filters.assigned_account_manager_id === 'unassigned') {
+        query = query.is('assigned_account_manager_id', null);
+      } else {
+        query = query.eq('assigned_account_manager_id', filters.assigned_account_manager_id);
+      }
     }
     
     if (filters.assigned_inbox_manager_id) {
-      query = query.eq('assigned_inbox_manager_id', filters.assigned_inbox_manager_id);
+      if (filters.assigned_inbox_manager_id === 'unassigned') {
+        query = query.is('assigned_inbox_manager_id', null);
+      } else {
+        query = query.eq('assigned_inbox_manager_id', filters.assigned_inbox_manager_id);
+      }
     }
 
     // Apply sorting
