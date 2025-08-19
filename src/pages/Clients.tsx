@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { clientsApi, lookupsApi, stagingApi, supabase } from '@/lib/supabase-client';
+import { getGlobalTotals, getFilteredTotals, getClientsPage } from '@/lib/clientsData';
+import { diagnostics } from '@/lib/diagnostics';
 import type { Client, ClientFilters, TeamMember } from '@/types/database';
 import { ClientsTable } from '@/components/clients/ClientsTable';
 import { ClientsFilters } from '@/components/clients/ClientsFilters';
@@ -32,14 +34,26 @@ export default function Clients() {
   const [showFilters, setShowFilters] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Fetch clients data
+  // Fetch clients data using centralized helpers
   const { data: clientsData, isLoading: clientsLoading, error: clientsError } = useQuery({
     queryKey: ['clients', filters, currentPage, sortBy, sortOrder],
     queryFn: async () => {
-      const result = await clientsApi.getClients(filters, currentPage, CLIENTS_PER_PAGE, sortBy, sortOrder);
-      if (result.error) throw result.error;
-      return result;
+      return await getClientsPage(filters, currentPage, CLIENTS_PER_PAGE, sortBy, sortOrder);
     },
+    staleTime: 30000, // 30 seconds
+  });
+
+  // Fetch global totals (unaffected by filters)
+  const { data: globalTotals, isLoading: globalLoading } = useQuery({
+    queryKey: ['metrics', 'global'],
+    queryFn: getGlobalTotals,
+    staleTime: 60000, // 1 minute
+  });
+
+  // Fetch filtered totals (affected by current filters)
+  const { data: filteredTotals, isLoading: filteredLoading } = useQuery({
+    queryKey: ['metrics', 'filtered', filters],
+    queryFn: () => getFilteredTotals(filters),
     staleTime: 30000, // 30 seconds
   });
 
@@ -131,6 +145,27 @@ export default function Clients() {
   const totalCount = clientsData?.count || 0;
   const totalPages = Math.ceil(totalCount / CLIENTS_PER_PAGE);
 
+  // Dev-only diagnostics
+  useEffect(() => {
+    if (globalTotals && clientsData) {
+      diagnostics.checkArrayLengthUsage(
+        clientsData.pageCount, 
+        clients.length, 
+        'clients table count'
+      );
+      diagnostics.checkPaginatedCount(
+        totalCount, 
+        CLIENTS_PER_PAGE, 
+        'total count vs page size'
+      );
+      diagnostics.verifyQueryPredicates(
+        filters, 
+        filters, 
+        'stats vs table filters'
+      );
+    }
+  }, [globalTotals, clientsData, clients.length, totalCount, filters]);
+
   if (clientsError) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -186,7 +221,15 @@ export default function Clients() {
                     <Users className="h-5 w-5 text-primary" />
                     <h3 className="font-medium">Total Clients</h3>
                   </div>
-                  <p className="text-2xl font-bold mt-2">{totalCount}</p>
+                  <p className="text-2xl font-bold mt-2">
+                    {globalLoading ? '...' : globalTotals?.total ?? 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Global total</p>
+                  {filteredTotals && Object.keys(filters).length > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      {filteredTotals.filteredTotal} match filters
+                    </p>
+                  )}
                 </Card>
                 
                 <Card className="p-6">
@@ -195,28 +238,31 @@ export default function Clients() {
                     <h3 className="font-medium">Active</h3>
                   </div>
                   <p className="text-2xl font-bold mt-2">
-                    {clients.filter(c => c.relationship_status === 'ACTIVE').length}
+                    {globalLoading ? '...' : globalTotals?.active ?? 0}
                   </p>
+                  <p className="text-xs text-muted-foreground mt-1">Global total</p>
                 </Card>
                 
                 <Card className="p-6">
                   <div className="flex items-center gap-2">
                     <div className="h-5 w-5 rounded bg-warning" />
-                    <h3 className="font-medium">Pending</h3>
+                    <h3 className="font-medium">Inactive</h3>
                   </div>
                   <p className="text-2xl font-bold mt-2">
-                    {clients.filter(c => c.relationship_status === 'PENDING').length}
+                    {globalLoading ? '...' : globalTotals?.inactive ?? 0}
                   </p>
+                  <p className="text-xs text-muted-foreground mt-1">Global total</p>
                 </Card>
                 
                 <Card className="p-6">
                   <div className="flex items-center gap-2">
                     <div className="h-5 w-5 rounded bg-muted" />
-                    <h3 className="font-medium">Inactive</h3>
+                    <h3 className="font-medium">On This Page</h3>
                   </div>
                   <p className="text-2xl font-bold mt-2">
-                    {clients.filter(c => c.relationship_status === 'INACTIVE').length}
+                    {clientsLoading ? '...' : clientsData?.pageCount ?? 0}
                   </p>
+                  <p className="text-xs text-muted-foreground mt-1">Current page</p>
                 </Card>
               </div>
 
@@ -248,6 +294,20 @@ export default function Clients() {
                       teamMembers={teamMembers || []}
                     />
                   )}
+
+                  {/* Row Count Display */}
+                  <div className="flex items-center justify-between py-2 px-4 bg-muted/50 rounded-md" role="status" aria-live="polite">
+                    <span className="text-sm text-muted-foreground">
+                      Showing {clientsLoading ? '...' : clientsData?.pageCount ?? 0} of{' '}
+                      {clientsLoading ? '...' : totalCount} 
+                      {Object.keys(filters).length > 0 && filteredTotals && (
+                        <span> (filtered from {globalTotals?.total ?? 0} total)</span>
+                      )}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      Page {currentPage + 1} of {totalPages}
+                    </span>
+                  </div>
 
                   {/* Clients Table */}
                   <ClientsTable
