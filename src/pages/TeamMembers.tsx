@@ -116,12 +116,12 @@ export default function TeamMembers() {
                   onChange={(e) => setSearch(e.target.value)}
                   className="max-w-sm"
                 />
-                <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v || undefined)}>
+                <Select value={roleFilter || "all"} onValueChange={(v) => setRoleFilter(v === "all" ? undefined : v)}>
                   <SelectTrigger className="w-48">
                     <SelectValue placeholder="Filter by role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All roles</SelectItem>
+                    <SelectItem value="all">All roles</SelectItem>
                     <SelectItem value="account_manager">Account Manager</SelectItem>
                     <SelectItem value="inbox_manager">Inbox Manager</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
