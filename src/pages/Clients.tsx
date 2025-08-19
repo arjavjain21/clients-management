@@ -1,27 +1,31 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Filter, Download, Users, Settings } from 'lucide-react';
+import { Plus, Search, Filter, Download, Users, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { clientsApi, lookupsApi } from '@/lib/supabase-client';
+import { clientsApi, lookupsApi, stagingApi, supabase } from '@/lib/supabase-client';
 import { getGlobalTotals, getFilteredTotals, getClientsPage } from '@/lib/clientsData';
 import { diagnostics } from '@/lib/diagnostics';
 import type { Client, ClientFilters, TeamMember } from '@/types/database';
 import { ClientsTable } from '@/components/clients/ClientsTable';
 import { ClientsFilters } from '@/components/clients/ClientsFilters';
 import { BulkActions } from '@/components/clients/BulkActions';
-import { ClientEditDialog } from '@/components/clients/ClientEditDialog';
+import { StagingViewer } from '@/components/clients/StagingViewer';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { AppSidebar } from '@/components/layout/AppSidebar';
-import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 
 const CLIENTS_PER_PAGE = 50;
 
 export default function Clients() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState('clients');
   const [currentPage, setCurrentPage] = useState(0);
   const [filters, setFilters] = useState<ClientFilters>({});
   const [sortBy, setSortBy] = useState('client_name');
@@ -29,11 +33,6 @@ export default function Clients() {
   const [selectedClients, setSelectedClients] = useState<Array<{ client_code: string; client_id: number }>>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [editingClient, setEditingClient] = useState<Client | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-
-  // Enable realtime notifications
-  useRealtimeNotifications();
 
   // Fetch clients data using centralized helpers
   const { data: clientsData, isLoading: clientsLoading, error: clientsError } = useQuery({
@@ -146,12 +145,6 @@ export default function Clients() {
   const totalCount = clientsData?.count || 0;
   const totalPages = Math.ceil(totalCount / CLIENTS_PER_PAGE);
 
-  // Handle client row click to open edit dialog
-  const handleClientClick = (client: Client) => {
-    setEditingClient(client);
-    setEditDialogOpen(true);
-  };
-
   // Dev-only diagnostics
   useEffect(() => {
     if (globalTotals && clientsData) {
@@ -199,7 +192,7 @@ export default function Clients() {
               {/* Page Header */}
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tight">Clients Dashboard</h1>
+                  <h1 className="text-3xl font-bold tracking-tight">Clients Admin</h1>
                   <p className="text-muted-foreground">
                     Manage client relationships, assignments, and settings
                   </p>
@@ -273,66 +266,69 @@ export default function Clients() {
                 </Card>
               </div>
 
-              {/* Filters */}
-              {showFilters && (
-                <ClientsFilters
-                  filters={filters}
-                  onFiltersChange={handleFiltersChange}
-                  teamMembers={teamMembers || []}
-                  relationshipStatuses={relationshipStatuses || []}
-                  relationshipTypes={relationshipTypes || []}
-                />
-              )}
+              {/* Main Tabs */}
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+                <TabsList>
+                  <TabsTrigger value="clients">Clients</TabsTrigger>
+                  <TabsTrigger value="staging">Staging Data</TabsTrigger>
+                </TabsList>
 
-              {/* Bulk Actions */}
-              {selectedClients.length > 0 && (
-                <BulkActions
-                  selectedCount={selectedClients.length}
-                  onBulkUpdate={handleBulkUpdate}
-                  onClearSelection={() => setSelectedClients([])}
-                  teamMembers={teamMembers || []}
-                />
-              )}
-
-              {/* Row Count Display */}
-              <div className="flex items-center justify-between py-2 px-4 bg-muted/50 rounded-md" role="status" aria-live="polite">
-                <span className="text-sm text-muted-foreground">
-                  Showing {clientsLoading ? '...' : clientsData?.pageCount ?? 0} of{' '}
-                  {clientsLoading ? '...' : totalCount} 
-                  {Object.keys(filters).length > 0 && filteredTotals && (
-                    <span> (filtered from {globalTotals?.total ?? 0} total)</span>
+                <TabsContent value="clients" className="space-y-4">
+                  {/* Filters */}
+                  {showFilters && (
+                    <ClientsFilters
+                      filters={filters}
+                      onFiltersChange={handleFiltersChange}
+                      teamMembers={teamMembers || []}
+                      relationshipStatuses={relationshipStatuses || []}
+                      relationshipTypes={relationshipTypes || []}
+                    />
                   )}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  Page {currentPage + 1} of {totalPages}
-                </span>
-              </div>
 
-              {/* Clients Table */}
-              <ClientsTable
-                clients={clients}
-                loading={clientsLoading}
-                selectedClients={selectedClients}
-                onSelectedClientsChange={setSelectedClients}
-                sortBy={sortBy}
-                sortOrder={sortOrder}
-                onSort={handleSort}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-                teamMembers={teamMembers || []}
-                onClientClick={handleClientClick}
-              />
+                  {/* Bulk Actions */}
+                  {selectedClients.length > 0 && (
+                    <BulkActions
+                      selectedCount={selectedClients.length}
+                      onBulkUpdate={handleBulkUpdate}
+                      onClearSelection={() => setSelectedClients([])}
+                      teamMembers={teamMembers || []}
+                    />
+                  )}
 
-              {/* Edit Dialog */}
-              <ClientEditDialog
-                client={editingClient}
-                open={editDialogOpen}
-                onOpenChange={setEditDialogOpen}
-                teamMembers={teamMembers || []}
-                relationshipStatuses={relationshipStatuses || []}
-                relationshipTypes={relationshipTypes || []}
-              />
+                  {/* Row Count Display */}
+                  <div className="flex items-center justify-between py-2 px-4 bg-muted/50 rounded-md" role="status" aria-live="polite">
+                    <span className="text-sm text-muted-foreground">
+                      Showing {clientsLoading ? '...' : clientsData?.pageCount ?? 0} of{' '}
+                      {clientsLoading ? '...' : totalCount} 
+                      {Object.keys(filters).length > 0 && filteredTotals && (
+                        <span> (filtered from {globalTotals?.total ?? 0} total)</span>
+                      )}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      Page {currentPage + 1} of {totalPages}
+                    </span>
+                  </div>
+
+                  {/* Clients Table */}
+                  <ClientsTable
+                    clients={clients}
+                    loading={clientsLoading}
+                    selectedClients={selectedClients}
+                    onSelectedClientsChange={setSelectedClients}
+                    sortBy={sortBy}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    teamMembers={teamMembers || []}
+                  />
+                </TabsContent>
+
+                <TabsContent value="staging" className="space-y-4">
+                  <StagingViewer />
+                </TabsContent>
+              </Tabs>
             </div>
           </main>
         </div>
