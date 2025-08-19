@@ -29,6 +29,7 @@ interface ClientsTableProps {
   totalPages: number;
   onPageChange: (page: number) => void;
   teamMembers: TeamMember[];
+  onClientClick?: (client: Client) => void;
 }
 
 export function ClientsTable({
@@ -43,6 +44,7 @@ export function ClientsTable({
   totalPages,
   onPageChange,
   teamMembers,
+  onClientClick,
 }: ClientsTableProps) {
   const isSelected = (client: Client) =>
     selectedClients.some(
@@ -174,8 +176,12 @@ export function ClientsTable({
             </TableHeader>
             <TableBody>
               {clients.map((client) => (
-                <TableRow key={`${client.client_code}-${client.client_id}`}>
-                  <TableCell>
+                <TableRow 
+                  key={`${client.client_code}-${client.client_id}`}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => onClientClick?.(client)}
+                >
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={isSelected(client)}
                       onCheckedChange={() => toggleSelection(client)}
@@ -247,17 +253,8 @@ export function ClientsTable({
                       <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-2">
-                      <Button
-                        asChild
-                        variant="ghost"
-                        size="sm"
-                      >
-                        <Link to={`/clients/${client.client_code}/${client.client_id}`}>
-                          <ExternalLink className="h-4 w-4" />
-                        </Link>
-                      </Button>
                       {client.client_website && (
                         <Button
                           asChild
