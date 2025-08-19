@@ -33,7 +33,7 @@ const navigation = [
   },
   {
     name: 'Staging Data',
-    href: '/clients?tab=staging',
+    href: '/staging',
     icon: Database,
     current: false,
   },
@@ -95,7 +95,8 @@ export function AppSidebar({ open, onOpenChange }: AppSidebarProps) {
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.href || 
-                (item.href === '/clients' && location.pathname.startsWith('/clients'));
+                (item.href === '/clients' && location.pathname.startsWith('/clients')) ||
+                (item.href === '/staging' && location.pathname.startsWith('/staging'));
               
               return (
                 <Link

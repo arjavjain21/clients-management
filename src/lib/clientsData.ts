@@ -1,4 +1,4 @@
-import { supabase } from './supabase-client';
+import { supabase } from '@/integrations/supabase/client';
 import { INACTIVE_STATUSES } from '@/config/statusBuckets';
 import type { ClientFilters } from '@/types/database';
 
@@ -6,7 +6,8 @@ function applyFilters(query: any, filters?: ClientFilters) {
   if (!filters) return query;
   
   if (filters.search) {
-    query = query.or(`client_name.ilike.%${filters.search}%, client_email.ilike.%${filters.search}%, client_code.ilike.%${filters.search}%`);
+    const s = filters.search;
+    query = query.or(`client_name.ilike.%${s}%,client_email.ilike.%${s}%,client_code.ilike.%${s}%`);
   }
   
   if (filters.relationship_status) {

@@ -29,6 +29,7 @@ interface ClientsTableProps {
   totalPages: number;
   onPageChange: (page: number) => void;
   teamMembers: TeamMember[];
+  onRowClick?: (client: Client) => void;
 }
 
 export function ClientsTable({
@@ -43,6 +44,7 @@ export function ClientsTable({
   totalPages,
   onPageChange,
   teamMembers,
+  onRowClick,
 }: ClientsTableProps) {
   const isSelected = (client: Client) =>
     selectedClients.some(
@@ -174,7 +176,11 @@ export function ClientsTable({
             </TableHeader>
             <TableBody>
               {clients.map((client) => (
-                <TableRow key={`${client.client_code}-${client.client_id}`}>
+                <TableRow 
+                  key={`${client.client_code}-${client.client_id}`}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => onRowClick?.(client)}
+                >
                   <TableCell>
                     <Checkbox
                       checked={isSelected(client)}

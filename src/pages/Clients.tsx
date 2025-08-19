@@ -19,6 +19,8 @@ import { StagingViewer } from '@/components/clients/StagingViewer';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { AppSidebar } from '@/components/layout/AppSidebar';
+import { ClientEditDialog } from '@/components/clients/ClientEditDialog';
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 
 const CLIENTS_PER_PAGE = 50;
 
@@ -33,6 +35,10 @@ export default function Clients() {
   const [selectedClients, setSelectedClients] = useState<Array<{ client_code: string; client_id: number }>>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+
+  // Enable realtime notifications
+  useRealtimeNotifications();
 
   // Fetch clients data using centralized helpers
   const { data: clientsData, isLoading: clientsLoading, error: clientsError } = useQuery({
@@ -322,6 +328,7 @@ export default function Clients() {
                     totalPages={totalPages}
                     onPageChange={handlePageChange}
                     teamMembers={teamMembers || []}
+                    onRowClick={setEditingClient}
                   />
                 </TabsContent>
 
@@ -329,10 +336,20 @@ export default function Clients() {
                   <StagingViewer />
                 </TabsContent>
               </Tabs>
-            </div>
-          </main>
+              </div>
+            </main>
+          </div>
         </div>
-      </div>
-    </AuthGuard>
-  );
-}
+
+        {/* Edit Dialog */}
+        <ClientEditDialog
+          client={editingClient}
+          open={!!editingClient}
+          onOpenChange={(open) => !open && setEditingClient(null)}
+          teamMembers={teamMembers || []}
+          relationshipStatuses={relationshipStatuses || []}
+          relationshipTypes={relationshipTypes || []}
+        />
+      </AuthGuard>
+    );
+  }
