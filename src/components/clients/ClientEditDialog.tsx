@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { clientsApi, lookupsApi } from '@/lib/supabase-client';
+import { supabase } from '@/integrations/supabase/client';
+import { listTeamMembers } from '@/lib/teamMembersData';
+import { sendAssignmentEmail } from '@/lib/email';
 import type { Client } from '@/types/database';
 import {
   Dialog,
@@ -42,22 +44,36 @@ export function ClientEditDialog({
 
   const initial = React.useMemo(() => client, [client]);
 
-  // Load team members and lookups
-  const { data: teamMembers = [] } = useQuery({
-    queryKey: ['team-members'],
-    queryFn: () => lookupsApi.getTeamMembers().then(res => res.data || []),
+  // Load team members and lookups with role filtering
+  const { data: accountManagers = [] } = useQuery({
+    queryKey: ['team-members', { role: 'account_manager' }],
+    queryFn: () => listTeamMembers({ role: 'account_manager' }),
+    enabled: open,
+  });
+
+  const { data: inboxManagers = [] } = useQuery({
+    queryKey: ['team-members', { role: 'inbox_manager' }],
+    queryFn: () => listTeamMembers({ role: 'inbox_manager' }),
     enabled: open,
   });
 
   const { data: relationshipStatuses = [] } = useQuery({
     queryKey: ['relationship-statuses'],
-    queryFn: () => lookupsApi.getRelationshipStatuses().then(res => res.data || []),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('relationship_statuses').select('*').order('name');
+      if (error) throw error;
+      return data ?? [];
+    },
     enabled: open,
   });
 
   const { data: relationshipTypes = [] } = useQuery({
     queryKey: ['relationship-types'],
-    queryFn: () => lookupsApi.getRelationshipTypes().then(res => res.data || []),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('relationship_types').select('*').order('name');
+      if (error) throw error;
+      return data ?? [];
+    },
     enabled: open,
   });
 
@@ -86,10 +102,10 @@ export function ClientEditDialog({
     try {
       // Minimal patch: only changed keys
       const patch: Record<string, any> = {};
-      Object.entries(formData).forEach(([k, v]) => {
-        if (k === 'client_code' || k === 'client_id' || k === 'client_name') return;
+      for (const [k, v] of Object.entries(formData)) {
+        if (["client_code","client_id","client_name","created_at","updated_at"].includes(k)) continue;
         if ((initial as any)?.[k] !== v) patch[k] = v;
-      });
+      }
       
       if (Object.keys(patch).length === 0) {
         toast({ title: "No changes", description: "Nothing to update." });
@@ -97,23 +113,71 @@ export function ClientEditDialog({
         return;
       }
       
-      await clientsApi.updateClient(client.client_code, client.client_id, patch);
+      // Update via Supabase client directly
+      const { error } = await supabase
+        .from("clients")
+        .update(patch)
+        .eq("client_code", client.client_code)
+        .eq("client_id", client.client_id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+
+      // Send assignment emails if managers changed
+      const toNotify: Array<{email: string; full_name: string}> = [];
+      
+      if (patch.assigned_account_manager_id && patch.assigned_account_manager_id !== initial?.assigned_account_manager_id) {
+        const am = accountManagers.find(m => m.id === patch.assigned_account_manager_id);
+        if (am) toNotify.push({ email: am.email, full_name: am.full_name });
+      }
+      
+      if (patch.assigned_inbox_manager_id && patch.assigned_inbox_manager_id !== initial?.assigned_inbox_manager_id) {
+        const im = inboxManagers.find(m => m.id === patch.assigned_inbox_manager_id);
+        if (im) toNotify.push({ email: im.email, full_name: im.full_name });
+      }
+      
+      // Send notification emails
+      for (const tm of toNotify) {
+        try {
+          await sendAssignmentEmail({
+            to: tm.email,
+            subject: `Client assigned: ${client.client_name ?? client.client_code}`,
+            text: `Hi ${tm.full_name},
+
+You have been assigned to a client.
+
+Client Name: ${client.client_name ?? "-"}
+Client Code: ${client.client_code}
+Client ID: ${client.client_id}
+Company: ${formData.client_company_name ?? "-"}
+Relationship: ${formData.relationship_status ?? "-"} (${formData.relationship_type ?? "-"})
+Target (avg_dollar_gen_pm): ${formData.avg_dollar_gen_pm ?? "-"}
+Weekend Sending: ${formData.weekend_sending_mode ?? "-"}
+
+Regards,
+Operations`
+          });
+        } catch (emailError) {
+          console.warn('Failed to send assignment email:', emailError);
+        }
+      }
 
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['clients'] });
-      queryClient.invalidateQueries({ queryKey: ['metrics'] });
-      queryClient.invalidateQueries({ queryKey: ['team-members'] });
+      queryClient.invalidateQueries({ queryKey: ['metrics','global'] });
+      queryClient.invalidateQueries({ queryKey: ['metrics','filtered'] });
 
       toast({
         title: "Client updated",
         description: `${client.client_name || client.client_code} has been updated successfully.`,
       });
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Update error:', error);
       toast({
         title: "Update failed",
-        description: "There was an error updating the client. Please try again.",
+        description: error.message ?? "There was an error updating the client. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -271,7 +335,7 @@ export function ClientEditDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {teamMembers.map((member) => (
+                  {accountManagers.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
                       {member.full_name}
                     </SelectItem>
@@ -290,7 +354,7 @@ export function ClientEditDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {teamMembers.map((member) => (
+                  {inboxManagers.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
                       {member.full_name}
                     </SelectItem>

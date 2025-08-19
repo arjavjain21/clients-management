@@ -43,3 +43,14 @@ export async function createTeamMember(tm: TeamMember) {
   if (error) throw error;
   return data;
 }
+
+export async function deleteTeamMember(id: string) {
+  // Unassign from clients (both roles)
+  await supabase.from("clients").update({ assigned_account_manager_id: null }).eq("assigned_account_manager_id", id);
+  await supabase.from("clients").update({ assigned_inbox_manager_id: null }).eq("assigned_inbox_manager_id", id);
+  
+  // Delete member
+  const { data, error } = await supabase.from("team_members").delete().eq("id", id).select().single();
+  if (error) throw error;
+  return data;
+}

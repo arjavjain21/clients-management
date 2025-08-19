@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { listTeamMembers, createTeamMember } from '@/lib/teamMembersData';
+import { listTeamMembers, createTeamMember, deleteTeamMember } from '@/lib/teamMembersData';
+import { sendAssignmentEmail } from '@/lib/email';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
@@ -33,12 +34,49 @@ export default function TeamMembers() {
     onSuccess: (row) => {
       toast({ title: 'Team member added', description: row.full_name });
       queryClient.invalidateQueries({ queryKey: ['team-members'] });
+      // Also refresh role-specific queries for client overlay selects
+      queryClient.invalidateQueries({ queryKey: ['team-members', { role: 'account_manager' }] });
+      queryClient.invalidateQueries({ queryKey: ['team-members', { role: 'inbox_manager' }] });
       setForm({ full_name: '', email: '', role: 'account_manager' });
     },
     onError: (e: any) =>
       toast({
         variant: 'destructive',
         title: 'Create failed',
+        description: e.message || 'Unknown error',
+      }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteTeamMember,
+    onSuccess: async (removed: any) => {
+      toast({ title: 'Team member removed', description: removed.full_name });
+      
+      // Send removal notification email
+      try {
+        await sendAssignmentEmail({
+          to: removed.email,
+          subject: "You have been removed from the team",
+          text: `Hi ${removed.full_name},
+
+You have been removed from the team directory and unassigned from all clients.
+
+Regards,
+Operations`,
+        });
+      } catch (emailError) {
+        console.warn('Failed to send removal email:', emailError);
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['team-members'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['team-members', { role: 'account_manager' }] });
+      queryClient.invalidateQueries({ queryKey: ['team-members', { role: 'inbox_manager' }] });
+    },
+    onError: (e: any) =>
+      toast({
+        variant: 'destructive',
+        title: 'Remove failed',
         description: e.message || 'Unknown error',
       }),
   });
@@ -143,6 +181,17 @@ export default function TeamMembers() {
                           {member.email} • {member.role?.replace('_', ' ')}
                         </div>
                       </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={async () => {
+                          if (!confirm(`Remove ${member.full_name}? They will be unassigned from all clients.`)) return;
+                          deleteMutation.mutate(member.id!);
+                        }}
+                        disabled={deleteMutation.isPending}
+                      >
+                        Remove
+                      </Button>
                     </div>
                   ))
                 )}

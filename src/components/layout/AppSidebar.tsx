@@ -7,6 +7,7 @@ import {
   BarChart3,
   Settings,
   Home,
+  TestTube,
   X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,12 @@ const navigation = [
     name: 'Team Members',
     href: '/team-members',
     icon: Users,
+    current: false,
+  },
+  {
+    name: 'Self-Test',
+    href: '/db-self-test',
+    icon: TestTube,
     current: false,
   },
   {
@@ -103,7 +110,8 @@ export function AppSidebar({ open, onOpenChange }: AppSidebarProps) {
               const isActive = location.pathname === item.href || 
                 (item.href === '/clients' && location.pathname.startsWith('/clients')) ||
                 (item.href === '/staging' && location.pathname.startsWith('/staging')) ||
-                (item.href === '/team-members' && location.pathname.startsWith('/team-members'));
+                (item.href === '/team-members' && location.pathname.startsWith('/team-members')) ||
+                (item.href === '/db-self-test' && location.pathname.startsWith('/db-self-test'));
               
               return (
                 <Link
