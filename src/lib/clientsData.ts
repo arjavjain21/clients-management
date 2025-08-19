@@ -6,19 +6,19 @@ function applyFilters(query: any, filters?: ClientFilters) {
   if (!filters) return query;
   
   if (filters.search) {
-    query = query.or(`client_name.ilike.%${filters.search}%,client_email.ilike.%${filters.search}%,client_code.ilike.%${filters.search}%`);
+    query = query.or(`client_name.ilike.%${filters.search}%, client_email.ilike.%${filters.search}%, client_code.ilike.%${filters.search}%`);
   }
   
-  if (filters.relationship_status && filters.relationship_status.length > 0) {
-    query = query.in('relationship_status', filters.relationship_status);
+  if (filters.relationship_status) {
+    query = query.eq('relationship_status', filters.relationship_status);
   }
   
-  if (filters.relationship_type && filters.relationship_type.length > 0) {
-    query = query.in('relationship_type', filters.relationship_type);
+  if (filters.relationship_type) {
+    query = query.eq('relationship_type', filters.relationship_type);
   }
   
-  if (filters.weekend_sending_mode && filters.weekend_sending_mode.length > 0) {
-    query = query.in('weekend_sending_mode', filters.weekend_sending_mode);
+  if (filters.weekend_sending_mode) {
+    query = query.eq('weekend_sending_mode', filters.weekend_sending_mode);
   }
   
   if (filters.assigned_account_manager_id) {
