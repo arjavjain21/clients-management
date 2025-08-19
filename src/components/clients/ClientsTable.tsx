@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+// Note: No routing from row actions; edit opens overlay via onRowClick
 import { ChevronUp, ChevronDown, ExternalLink, Mail, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

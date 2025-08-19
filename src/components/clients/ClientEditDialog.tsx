@@ -88,10 +88,10 @@ export function ClientEditDialog({
         weekend_sending_mode: client.weekend_sending_mode || 'inherit',
         assigned_account_manager_id: client.assigned_account_manager_id || '',
         assigned_inbox_manager_id: client.assigned_inbox_manager_id || '',
-        avg_dollar_gen_pm: client.avg_dollar_gen_pm || 0,
+        avg_dollar_gen_pm: client.avg_dollar_gen_pm ?? '',
         phone_number: client.phone_number || '',
         booking_link: client.booking_link || '',
-        recurring_cost_usd: client.recurring_cost_usd || 0,
+        recurring_cost_usd: client.recurring_cost_usd ?? '',
       });
     }
   }, [client]);
@@ -100,11 +100,42 @@ export function ClientEditDialog({
     if (!client) return;
     setSaving(true);
     try {
-      // Minimal patch: only changed keys
+      // Normalize values: empty strings -> null, numbers -> number, booleans -> boolean, UUID empties -> null
+      const numericFields = new Set(['recurring_cost_usd', 'avg_dollar_gen_pm']);
+      const booleanFields = new Set(['onboarding_activated']);
+      const uuidFields = new Set(['assigned_account_manager_id', 'assigned_inbox_manager_id']);
+
+      const normalizeValue = (key: string, value: any) => {
+        if (value === '') return null;
+        if (uuidFields.has(key)) return value || null;
+        if (numericFields.has(key)) {
+          const num = typeof value === 'number' ? value : parseFloat(value);
+          return Number.isFinite(num) ? num : null;
+        }
+        if (booleanFields.has(key)) {
+          if (typeof value === 'boolean') return value;
+          if (value === 'true') return true;
+          if (value === 'false') return false;
+          return null;
+        }
+        return value;
+      };
+
+      // Build normalized current and initial, then compute minimal patch
+      const keys = Object.keys(formData);
+      const normalizedCurrent: Record<string, any> = {};
+      const normalizedInitial: Record<string, any> = {};
+      for (const key of keys) {
+        if (["client_code","client_id","client_name","created_at","updated_at"].includes(key)) continue;
+        normalizedCurrent[key] = normalizeValue(key, (formData as any)[key]);
+        normalizedInitial[key] = normalizeValue(key, (initial as any)?.[key]);
+      }
+
       const patch: Record<string, any> = {};
-      for (const [k, v] of Object.entries(formData)) {
-        if (["client_code","client_id","client_name","created_at","updated_at"].includes(k)) continue;
-        if ((initial as any)?.[k] !== v) patch[k] = v;
+      for (const key of Object.keys(normalizedCurrent)) {
+        if (normalizedCurrent[key] !== normalizedInitial[key]) {
+          patch[key] = normalizedCurrent[key];
+        }
       }
       
       if (Object.keys(patch).length === 0) {
@@ -127,12 +158,18 @@ export function ClientEditDialog({
       // Send assignment emails if managers changed
       const toNotify: Array<{email: string; full_name: string}> = [];
       
-      if (patch.assigned_account_manager_id && patch.assigned_account_manager_id !== initial?.assigned_account_manager_id) {
+      if (
+        patch.assigned_account_manager_id &&
+        patch.assigned_account_manager_id !== initial?.assigned_account_manager_id
+      ) {
         const am = accountManagers.find(m => m.id === patch.assigned_account_manager_id);
         if (am) toNotify.push({ email: am.email, full_name: am.full_name });
       }
       
-      if (patch.assigned_inbox_manager_id && patch.assigned_inbox_manager_id !== initial?.assigned_inbox_manager_id) {
+      if (
+        patch.assigned_inbox_manager_id &&
+        patch.assigned_inbox_manager_id !== initial?.assigned_inbox_manager_id
+      ) {
         const im = inboxManagers.find(m => m.id === patch.assigned_inbox_manager_id);
         if (im) toNotify.push({ email: im.email, full_name: im.full_name });
       }

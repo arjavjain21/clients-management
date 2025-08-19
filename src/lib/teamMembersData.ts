@@ -45,12 +45,30 @@ export async function createTeamMember(tm: TeamMember) {
 }
 
 export async function deleteTeamMember(id: string) {
+  // Fetch member before deletion for email/toast context
+  const { data: memberBefore } = await supabase
+    .from('team_members')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+
   // Unassign from clients (both roles)
-  await supabase.from("clients").update({ assigned_account_manager_id: null }).eq("assigned_account_manager_id", id);
-  await supabase.from("clients").update({ assigned_inbox_manager_id: null }).eq("assigned_inbox_manager_id", id);
+  await supabase
+    .from("clients")
+    .update({ assigned_account_manager_id: null })
+    .eq("assigned_account_manager_id", id);
+  await supabase
+    .from("clients")
+    .update({ assigned_inbox_manager_id: null })
+    .eq("assigned_inbox_manager_id", id);
   
-  // Delete member
-  const { data, error } = await supabase.from("team_members").delete().eq("id", id).select().single();
+  // Delete member; tolerate zero-row delete
+  const { error } = await supabase
+    .from("team_members")
+    .delete()
+    .eq("id", id);
   if (error) throw error;
-  return data;
+
+  // Return the pre-fetched member info (may be undefined if not found)
+  return memberBefore ?? { id, full_name: '(removed)', email: '', role: 'other', active: false };
 }

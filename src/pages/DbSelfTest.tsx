@@ -22,7 +22,6 @@ export default function DbSelfTest() {
   const envChecks = [
     { name: 'SUPABASE_URL', value: !!import.meta.env.VITE_SUPABASE_URL, required: true },
     { name: 'SUPABASE_ANON_KEY', value: !!import.meta.env.VITE_SUPABASE_ANON_KEY, required: true },
-    { name: 'LOVABLE_WRITE_SECRET', value: !!import.meta.env.VITE_LOVABLE_WRITE_SECRET, required: false },
     { name: 'RESEND_API_KEY (edge function)', value: 'Unknown', required: false },
     { name: 'EMAIL_FROM (edge function)', value: 'Unknown', required: false },
   ];

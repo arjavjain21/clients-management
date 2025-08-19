@@ -2,9 +2,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://onnbdclahsxoqdfgdsbm.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ubmJkY2xhaHN4b3FkZmdkc2JtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDY2NjIsImV4cCI6MjA3MTA4MjY2Mn0.bVpQJ7_pmPL09RsnC_6aL9nbNylL-XgTJM-37lmDKG8";
-const LOVABLE_WRITE_SECRET = import.meta.env.VITE_LOVABLE_WRITE_SECRET || "";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +14,5 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     persistSession: true,
     autoRefreshToken: true,
   },
-  global: {
-    headers: LOVABLE_WRITE_SECRET ? { "x-lovable-secret": LOVABLE_WRITE_SECRET } : {}
-  }
+  global: {}
 });
