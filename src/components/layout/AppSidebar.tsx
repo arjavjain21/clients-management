@@ -26,7 +26,7 @@ const navigation = [
     current: false,
   },
   {
-    name: 'Clients',
+    name: 'Clients Dashboard',
     href: '/clients',
     icon: Users,
     current: true,
@@ -35,6 +35,12 @@ const navigation = [
     name: 'Staging Data',
     href: '/staging',
     icon: Database,
+    current: false,
+  },
+  {
+    name: 'Team Members',
+    href: '/team-members',
+    icon: Users,
     current: false,
   },
   {
@@ -96,7 +102,8 @@ export function AppSidebar({ open, onOpenChange }: AppSidebarProps) {
               const Icon = item.icon;
               const isActive = location.pathname === item.href || 
                 (item.href === '/clients' && location.pathname.startsWith('/clients')) ||
-                (item.href === '/staging' && location.pathname.startsWith('/staging'));
+                (item.href === '/staging' && location.pathname.startsWith('/staging')) ||
+                (item.href === '/team-members' && location.pathname.startsWith('/team-members'));
               
               return (
                 <Link

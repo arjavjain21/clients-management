@@ -181,7 +181,7 @@ export function ClientsTable({
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => onRowClick?.(client)}
                 >
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={isSelected(client)}
                       onCheckedChange={() => toggleSelection(client)}
@@ -254,32 +254,32 @@ export function ClientsTable({
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRowClick?.(client);
+                      }}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                    {client.client_website && (
                       <Button
                         asChild
                         variant="ghost"
                         size="sm"
                       >
-                        <Link to={`/clients/${client.client_code}/${client.client_id}`}>
-                          <ExternalLink className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      {client.client_website && (
-                        <Button
-                          asChild
-                          variant="ghost"
-                          size="sm"
+                        <a
+                          href={client.client_website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <a
-                            href={client.client_website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Globe className="h-4 w-4" />
-                          </a>
-                        </Button>
-                      )}
-                    </div>
+                          <Globe className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

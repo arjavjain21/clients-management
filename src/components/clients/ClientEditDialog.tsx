@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { clientsApi } from '@/lib/supabase-client';
-import type { Client, TeamMember } from '@/types/database';
+import { clientsApi, lookupsApi } from '@/lib/supabase-client';
+import type { Client } from '@/types/database';
 import {
   Dialog,
   DialogContent,
@@ -28,18 +28,12 @@ interface ClientEditDialogProps {
   client: Client | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  teamMembers: TeamMember[];
-  relationshipStatuses: any[];
-  relationshipTypes: any[];
 }
 
 export function ClientEditDialog({
   client,
   open,
   onOpenChange,
-  teamMembers,
-  relationshipStatuses = [],
-  relationshipTypes = [],
 }: ClientEditDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -47,6 +41,25 @@ export function ClientEditDialog({
   const [formData, setFormData] = useState<Record<string, any>>({});
 
   const initial = React.useMemo(() => client, [client]);
+
+  // Load team members and lookups
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ['team-members'],
+    queryFn: () => lookupsApi.getTeamMembers().then(res => res.data || []),
+    enabled: open,
+  });
+
+  const { data: relationshipStatuses = [] } = useQuery({
+    queryKey: ['relationship-statuses'],
+    queryFn: () => lookupsApi.getRelationshipStatuses().then(res => res.data || []),
+    enabled: open,
+  });
+
+  const { data: relationshipTypes = [] } = useQuery({
+    queryKey: ['relationship-types'],
+    queryFn: () => lookupsApi.getRelationshipTypes().then(res => res.data || []),
+    enabled: open,
+  });
 
   useEffect(() => {
     if (client) {
@@ -89,6 +102,7 @@ export function ClientEditDialog({
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['metrics'] });
+      queryClient.invalidateQueries({ queryKey: ['team-members'] });
 
       toast({
         title: "Client updated",

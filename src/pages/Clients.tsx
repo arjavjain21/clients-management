@@ -346,9 +346,6 @@ export default function Clients() {
           client={editingClient}
           open={!!editingClient}
           onOpenChange={(open) => !open && setEditingClient(null)}
-          teamMembers={teamMembers || []}
-          relationshipStatuses={relationshipStatuses || []}
-          relationshipTypes={relationshipTypes || []}
         />
       </AuthGuard>
     );
