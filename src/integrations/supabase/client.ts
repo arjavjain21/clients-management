@@ -2,8 +2,17 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+// Prefer env vars; fall back to bundled defaults to avoid blank screen if preview env is missing
+const DEFAULT_URL = "https://onnbdclahsxoqdfgdsbm.supabase.co";
+const DEFAULT_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ubmJkY2xhaHN4b3FkZmdkc2JtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MDY2NjIsImV4cCI6MjA3MTA4MjY2Mn0.bVpQJ7_pmPL09RsnC_6aL9nbNylL-XgTJM-37lmDKG8";
+
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string) || DEFAULT_URL;
+const SUPABASE_PUBLISHABLE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || DEFAULT_ANON;
+
+if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  // Non-blocking warning so preview still renders with defaults
+  console.warn("Supabase env vars missing; using bundled defaults for preview.");
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
