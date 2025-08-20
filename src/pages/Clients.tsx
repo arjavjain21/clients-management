@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Filter, Download, Users, Settings } from 'lucide-react';
+import { Plus, Search, Filter, Download, Users, Settings, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -36,6 +36,7 @@ export default function Clients() {
   const [showFilters, setShowFilters] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Enable realtime notifications
   useRealtimeNotifications();
@@ -95,6 +96,19 @@ export default function Clients() {
   const handleFiltersChange = (newFilters: ClientFilters) => {
     setFilters(newFilters);
     setCurrentPage(0); // Reset to first page when filters change
+  };
+
+  // Handle search
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    const newFilters = { ...filters };
+    if (term.trim()) {
+      newFilters.search = term.trim();
+    } else {
+      delete newFilters.search;
+    }
+    setFilters(newFilters);
+    setCurrentPage(0);
   };
 
   // Handle sorting
@@ -205,6 +219,25 @@ export default function Clients() {
                 </div>
                 
                 <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search clients..."
+                      value={searchTerm}
+                      onChange={(e) => handleSearch(e.target.value)}
+                      className="pl-10 w-64"
+                    />
+                    {searchTerm && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSearch('')}
+                        className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"

@@ -111,7 +111,17 @@ export async function getClientsPage(
       recurring_cost_usd,
       booking_link,
       phone_number,
-      avg_dollar_gen_pm
+      avg_dollar_gen_pm,
+      assigned_account_manager:team_members!assigned_account_manager_id(
+        id,
+        full_name,
+        email
+      ),
+      assigned_inbox_manager:team_members!assigned_inbox_manager_id(
+        id,
+        full_name,
+        email
+      )
     `, { count: 'exact' });
 
   // Apply filters using the same logic

@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
+import { RoundRobinAssignButton } from './RoundRobinAssignButton';
 
 interface ClientEditDialogProps {
   client: Client | null;
@@ -425,14 +426,28 @@ Operations`
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Changes
-          </Button>
+        <DialogFooter className="flex justify-between">
+          <RoundRobinAssignButton 
+            client={client} 
+            onAssignmentComplete={() => {
+              // Refresh the clients queries to get updated data
+              queryClient.invalidateQueries({ queryKey: ['clients'] });
+              queryClient.invalidateQueries({ queryKey: ['metrics'] });
+              
+              // Update form data with latest client info after assignment
+              // Note: The queries will refresh the parent component and close/reopen this dialog with fresh data
+              onOpenChange(false);
+            }}
+          />
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Changes
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
