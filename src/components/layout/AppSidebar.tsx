@@ -21,48 +21,16 @@ interface AppSidebarProps {
 
 const navigation = [
   {
-    name: 'Dashboard',
-    href: '/',
-    icon: Home,
-    current: false,
-  },
-  {
-    name: 'Clients Dashboard',
+    name: 'Clients',
     href: '/clients',
     icon: Users,
     current: true,
   },
   {
-    name: 'Staging Data',
+    name: 'Staging (Bulk Imports)',
     href: '/staging',
     icon: Database,
     current: false,
-  },
-  {
-    name: 'Team Members',
-    href: '/team-members',
-    icon: Users,
-    current: false,
-  },
-  {
-    name: 'Self-Test',
-    href: '/db-self-test',
-    icon: TestTube,
-    current: false,
-  },
-  {
-    name: 'Analytics',
-    href: '/analytics',
-    icon: BarChart3,
-    current: false,
-    disabled: true,
-  },
-  {
-    name: 'Settings',
-    href: '/settings',
-    icon: Settings,
-    current: false,
-    disabled: true,
   },
 ];
 
@@ -109,9 +77,7 @@ export function AppSidebar({ open, onOpenChange }: AppSidebarProps) {
               const Icon = item.icon;
               const isActive = location.pathname === item.href || 
                 (item.href === '/clients' && location.pathname.startsWith('/clients')) ||
-                (item.href === '/staging' && location.pathname.startsWith('/staging')) ||
-                (item.href === '/team-members' && location.pathname.startsWith('/team-members')) ||
-                (item.href === '/db-self-test' && location.pathname.startsWith('/db-self-test'));
+                (item.href === '/staging' && location.pathname.startsWith('/staging'));
               
               return (
                 <Link

@@ -227,22 +227,50 @@ export function ClientsTable({
                     {getWeekendSendingBadge(client.weekend_sending_mode)}
                   </TableCell>
                   <TableCell>
-                    {(client as any).assigned_account_manager ? (
-                      <div className="text-sm">
-                        {(client as any).assigned_account_manager.full_name}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">Unassigned</span>
-                    )}
+                    {(() => {
+                      const nameFromClient = (client as any).assigned_account_manager_name as string | undefined;
+                      const emailFromClient = (client as any).assigned_account_manager_email as string | undefined;
+                      const hasClientFields = !!(nameFromClient || emailFromClient);
+                      if (hasClientFields) {
+                        return (
+                          <div className="text-sm">
+                            {nameFromClient || '—'} {emailFromClient ? <span className="text-muted-foreground">· {emailFromClient}</span> : null}
+                          </div>
+                        );
+                      }
+                      const am = (client as any).assigned_account_manager as { full_name?: string; email?: string } | null;
+                      if (am?.full_name || am?.email) {
+                        return (
+                          <div className="text-sm">
+                            {am.full_name || '—'} {am.email ? <span className="text-muted-foreground">· {am.email}</span> : null}
+                          </div>
+                        );
+                      }
+                      return <span className="text-muted-foreground text-sm">Unassigned</span>;
+                    })()}
                   </TableCell>
                   <TableCell>
-                    {(client as any).assigned_inbox_manager ? (
-                      <div className="text-sm">
-                        {(client as any).assigned_inbox_manager.full_name}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">Unassigned</span>
-                    )}
+                    {(() => {
+                      const nameFromClient = (client as any).assigned_inbox_manager_name as string | undefined;
+                      const emailFromClient = (client as any).assigned_inbox_manager_email as string | undefined;
+                      const hasClientFields = !!(nameFromClient || emailFromClient);
+                      if (hasClientFields) {
+                        return (
+                          <div className="text-sm">
+                            {nameFromClient || '—'} {emailFromClient ? <span className="text-muted-foreground">· {emailFromClient}</span> : null}
+                          </div>
+                        );
+                      }
+                      const im = (client as any).assigned_inbox_manager as { full_name?: string; email?: string } | null;
+                      if (im?.full_name || im?.email) {
+                        return (
+                          <div className="text-sm">
+                            {im.full_name || '—'} {im.email ? <span className="text-muted-foreground">· {im.email}</span> : null}
+                          </div>
+                        );
+                      }
+                      return <span className="text-muted-foreground text-sm">Unassigned</span>;
+                    })()}
                   </TableCell>
                   <TableCell className="text-right">
                     {client.avg_dollar_gen_pm ? (

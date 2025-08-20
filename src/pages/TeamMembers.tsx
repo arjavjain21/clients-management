@@ -38,6 +38,20 @@ export default function TeamMembers() {
       queryClient.invalidateQueries({ queryKey: ['team-members', { role: 'account_manager' }] });
       queryClient.invalidateQueries({ queryKey: ['team-members', { role: 'inbox_manager' }] });
       setForm({ full_name: '', email: '', role: 'account_manager' });
+
+      // Non-blocking welcome email
+      (async () => {
+        try {
+          await sendAssignmentEmail({
+            to: row.email,
+            subject: 'Welcome to the team',
+            text: `Hi ${row.full_name},\n\nWelcome to the team! Your role is: ${row.role?.replace('_',' ')}.\n\nRegards,\nOperations`,
+          });
+        } catch (emailError: any) {
+          console.warn('Failed to send welcome email:', emailError);
+          toast({ title: 'Email warning', description: 'Could not send welcome email (send-mail)', variant: 'default' });
+        }
+      })();
     },
     onError: (e: any) =>
       toast({
@@ -56,16 +70,12 @@ export default function TeamMembers() {
       try {
         await sendAssignmentEmail({
           to: removed.email,
-          subject: "You have been removed from the team",
-          text: `Hi ${removed.full_name},
-
-You have been removed from the team directory and unassigned from all clients.
-
-Regards,
-Operations`,
+          subject: 'You have been removed from the team',
+          text: `Hi ${removed.full_name},\n\nYou have been removed from the team directory and unassigned from all clients.\n\nRegards,\nOperations`,
         });
       } catch (emailError) {
         console.warn('Failed to send removal email:', emailError);
+        toast({ title: 'Email warning', description: 'Could not send removal email (send-mail)', variant: 'default' });
       }
       
       queryClient.invalidateQueries({ queryKey: ['team-members'] });
