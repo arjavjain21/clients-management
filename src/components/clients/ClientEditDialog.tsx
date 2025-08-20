@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,7 +42,7 @@ export function ClientEditDialog({
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState<Record<string, any>>({});
 
-  const initial = React.useMemo(() => client, [client]);
+  const initial = useMemo(() => client, [client]);
 
   // Load team members and lookups with role filtering
   const { data: accountManagers = [] } = useQuery({

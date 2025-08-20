@@ -32,6 +32,18 @@ const navigation = [
     icon: Database,
     current: false,
   },
+  {
+    name: 'Team Members',
+    href: '/team-members',
+    icon: Users,
+    current: false,
+  },
+  {
+    name: 'Database Self-Test',
+    href: '/db-self-test',
+    icon: TestTube,
+    current: false,
+  },
 ];
 
 export function AppSidebar({ open, onOpenChange }: AppSidebarProps) {
@@ -77,34 +89,28 @@ export function AppSidebar({ open, onOpenChange }: AppSidebarProps) {
               const Icon = item.icon;
               const isActive = location.pathname === item.href || 
                 (item.href === '/clients' && location.pathname.startsWith('/clients')) ||
-                (item.href === '/staging' && location.pathname.startsWith('/staging'));
+                (item.href === '/staging' && location.pathname.startsWith('/staging')) ||
+                (item.href === '/team-members' && location.pathname.startsWith('/team-members')) ||
+                (item.href === '/db-self-test' && location.pathname.startsWith('/db-self-test'));
               
               return (
                 <Link
                   key={item.name}
-                  to={item.disabled ? '#' : item.href}
+                  to={item.href}
                   className={cn(
                     'flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors',
                     isActive
                       ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent',
-                    item.disabled && 'opacity-50 cursor-not-allowed'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                   )}
-                  onClick={(e) => {
-                    if (item.disabled) {
-                      e.preventDefault();
-                    } else if (!item.disabled && window.innerWidth < 1024) {
+                  onClick={() => {
+                    if (window.innerWidth < 1024) {
                       onOpenChange(false);
                     }
                   }}
                 >
                   <Icon className="h-5 w-5" />
                   <span>{item.name}</span>
-                  {item.disabled && (
-                    <Badge variant="secondary" className="ml-auto text-xs">
-                      Soon
-                    </Badge>
-                  )}
                 </Link>
               );
             })}

@@ -8,6 +8,7 @@ const DEFAULT_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string) || DEFAULT_URL;
 const SUPABASE_PUBLISHABLE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || DEFAULT_ANON;
+const LOVABLE_WRITE_SECRET = import.meta.env.VITE_LOVABLE_WRITE_SECRET || "";
 
 if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
   // Non-blocking warning so preview still renders with defaults
@@ -23,5 +24,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     persistSession: true,
     autoRefreshToken: true,
   },
-  global: {}
+  global: {
+    headers: LOVABLE_WRITE_SECRET ? { "x-lovable-secret": LOVABLE_WRITE_SECRET } : {}
+  }
 });
