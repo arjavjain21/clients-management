@@ -33,9 +33,7 @@ export const clientsApi = {
     let query = supabase
       .from('clients')
       .select(`
-        *,
-        assigned_account_manager:team_members!clients_assigned_account_manager_id_fkey(id, full_name, email),
-        assigned_inbox_manager:team_members!clients_assigned_inbox_manager_id_fkey(id, full_name, email)
+        *
       `);
 
     // Apply filters
@@ -89,9 +87,7 @@ export const clientsApi = {
     return supabase
       .from('clients')
       .select(`
-        *,
-        assigned_account_manager:team_members!clients_assigned_account_manager_id_fkey(id, full_name, email, role),
-        assigned_inbox_manager:team_members!clients_assigned_inbox_manager_id_fkey(id, full_name, email, role)
+        *
       `)
       .eq('client_code', client_code)
       .eq('client_id', client_id)

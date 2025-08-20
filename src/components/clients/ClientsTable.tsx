@@ -46,6 +46,13 @@ export function ClientsTable({
   teamMembers,
   onRowClick,
 }: ClientsTableProps) {
+  const idToMember = React.useMemo(() => {
+    const map = new Map<string, { full_name?: string; email?: string }>();
+    teamMembers.forEach((tm) => {
+      if (tm.id) map.set(tm.id, { full_name: (tm as any).full_name, email: (tm as any).email });
+    });
+    return map;
+  }, [teamMembers]);
   const isSelected = (client: Client) =>
     selectedClients.some(
       (s) => s.client_code === client.client_code && s.client_id === client.client_id
@@ -238,7 +245,7 @@ export function ClientsTable({
                           </div>
                         );
                       }
-                      const am = (client as any).assigned_account_manager as { full_name?: string; email?: string } | null;
+                      const am = idToMember.get((client as any).assigned_account_manager_id);
                       if (am?.full_name || am?.email) {
                         return (
                           <div className="text-sm">
@@ -261,7 +268,7 @@ export function ClientsTable({
                           </div>
                         );
                       }
-                      const im = (client as any).assigned_inbox_manager as { full_name?: string; email?: string } | null;
+                      const im = idToMember.get((client as any).assigned_inbox_manager_id);
                       if (im?.full_name || im?.email) {
                         return (
                           <div className="text-sm">
