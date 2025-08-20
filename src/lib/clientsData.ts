@@ -91,38 +91,7 @@ export async function getClientsPage(
 ) {
   let query = supabase
     .from('clients')
-    .select(`
-      client_code,
-      client_id, 
-      client_name,
-      client_email,
-      client_company_name,
-      client_website,
-      relationship_status,
-      relationship_type,
-      weekend_sending_mode,
-      assigned_account_manager_id,
-      assigned_inbox_manager_id,
-      exit_date,
-      updated_at,
-      created_at,
-      onboarding_activated,
-      onboarding_date,
-      recurring_cost_usd,
-      booking_link,
-      phone_number,
-      avg_dollar_gen_pm,
-      assigned_account_manager:team_members!assigned_account_manager_id(
-        id,
-        full_name,
-        email
-      ),
-      assigned_inbox_manager:team_members!assigned_inbox_manager_id(
-        id,
-        full_name,
-        email
-      )
-    `, { count: 'exact' });
+    .select('*', { count: 'exact' });
 
   // Apply filters using the same logic
   query = applyFilters(query, filters);
