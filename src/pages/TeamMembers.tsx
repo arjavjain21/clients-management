@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { AppSidebar } from '@/components/layout/AppSidebar';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function TeamMembers() {
   const { toast } = useToast();
@@ -21,6 +22,35 @@ export default function TeamMembers() {
   const { data: members = [], isLoading } = useQuery({
     queryKey: ['team-members', { search, roleFilter }],
     queryFn: () => listTeamMembers({ search, role: roleFilter }),
+  });
+
+  // Per-member client counts (sum of AM + IM assignments)
+  const { data: memberClientCounts = {}, isLoading: countsLoading } = useQuery({
+    queryKey: ['team-members-client-counts', members.map(m => m.id).join(',')],
+    enabled: members.length > 0,
+    queryFn: async () => {
+      const entries = await Promise.all(
+        members
+          .filter((m) => !!m.id)
+          .map(async (m) => {
+            const [amRes, imRes] = await Promise.all([
+              supabase
+                .from('clients')
+                .select('client_id', { count: 'exact', head: true })
+                .eq('assigned_account_manager_id', m.id!),
+              supabase
+                .from('clients')
+                .select('client_id', { count: 'exact', head: true })
+                .eq('assigned_inbox_manager_id', m.id!),
+            ]);
+            if (amRes.error) throw amRes.error;
+            if (imRes.error) throw imRes.error;
+            const total = (amRes.count ?? 0) + (imRes.count ?? 0);
+            return [m.id!, total] as const;
+          })
+      );
+      return Object.fromEntries(entries) as Record<string, number>;
+    },
   });
 
   const [form, setForm] = useState({
@@ -186,7 +216,12 @@ export default function TeamMembers() {
                   members.map((member) => (
                     <div key={member.id} className="p-4 flex justify-between items-center">
                       <div>
-                        <div className="font-medium">{member.full_name}</div>
+                        <div className="font-medium">
+                          {member.full_name}
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            {(memberClientCounts as Record<string, number>)[member.id!] ?? 0} clients
+                          </span>
+                        </div>
                         <div className="text-sm text-muted-foreground">
                           {member.email} • {member.role?.replace('_', ' ')}
                         </div>
