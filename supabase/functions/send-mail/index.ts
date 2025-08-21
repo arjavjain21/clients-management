@@ -1,6 +1,11 @@
 // deno-lint-ignore-file
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
+// Prefer Brevo (Sendinblue) if configured; fall back to Resend
+const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY") ?? "";
+const BREVO_SENDER_EMAIL = Deno.env.get("BREVO_SENDER_EMAIL") ?? "";
+const BREVO_SENDER_NAME = Deno.env.get("BREVO_SENDER_NAME") ?? "Operations";
+
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const EMAIL_FROM = Deno.env.get("EMAIL_FROM") ?? "noreply@example.com";
 
@@ -18,29 +23,46 @@ Deno.serve(async (req) => {
   try {
     const { to, subject, text } = await req.json();
     
-    if (!RESEND_API_KEY) {
+    // Try Brevo first if configured fully
+    let response: Response | null = null;
+    if (BREVO_API_KEY && BREVO_SENDER_EMAIL) {
+      response = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": BREVO_API_KEY,
+        },
+        body: JSON.stringify({
+          sender: { email: BREVO_SENDER_EMAIL, name: BREVO_SENDER_NAME },
+          to: [{ email: to }],
+          subject,
+          textContent: text,
+        }),
+      });
+    } else if (RESEND_API_KEY) {
+      // Fallback to Resend if Brevo isn't configured
+      response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { 
+          "Authorization": `Bearer ${RESEND_API_KEY}`, 
+          "Content-Type": "application/json" 
+        },
+        body: JSON.stringify({ 
+          from: EMAIL_FROM, 
+          to: [to], 
+          subject, 
+          text 
+        })
+      });
+    } else {
       return new Response(
-        JSON.stringify({ ok: false, error: "RESEND_API_KEY missing" }), 
-        { 
+        JSON.stringify({ ok: false, error: "No email provider configured (set BREVO_* or RESEND_*)" }),
+        {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders }
         }
       );
     }
-    
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { 
-        "Authorization": `Bearer ${RESEND_API_KEY}`, 
-        "Content-Type": "application/json" 
-      },
-      body: JSON.stringify({ 
-        from: EMAIL_FROM, 
-        to: [to], 
-        subject, 
-        text 
-      })
-    });
     
     const body = await response.json();
     
@@ -55,7 +77,7 @@ Deno.serve(async (req) => {
     }
     
     return new Response(
-      JSON.stringify({ ok: true, id: body?.id }), 
+      JSON.stringify({ ok: true, id: body?.messageId || body?.id || body?.message }), 
       { 
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders }
