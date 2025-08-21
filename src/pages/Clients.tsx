@@ -250,14 +250,6 @@ export default function Clients() {
                     <Download className="h-4 w-4 mr-2" />
                     Export
                   </Button>
-                  <Button
-                    variant={sortBy === 'updated_at' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => handleSort('updated_at')}
-                    title="Sort by Last Updated"
-                  >
-                    Last Updated
-                  </Button>
                 </div>
               </div>
 
