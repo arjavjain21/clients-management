@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Smooth transitions for sidebar */
+@layer utilities {
+  .transition-width {
+    transition-property: width;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
