@@ -332,11 +332,8 @@ export default function TeamMembers() {
                   </Select>
                 </div>
               </div>
-              <Button
-                onClick={handleCreate}
-                disabled={!form.full_name || !form.email || create.isPending}
-              >
-                Add Member
+              <Button onClick={handleCreate} disabled={!form.full_name || !form.email || create.isPending}>
+                {create.isPending ? 'Adding…' : 'Add Member'}
               </Button>
             </CardContent>
           </Card>
