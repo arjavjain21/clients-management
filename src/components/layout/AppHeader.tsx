@@ -17,9 +17,10 @@ import { useActivity } from '@/context/activity';
 
 interface AppHeaderProps {
   onMenuClick: () => void;
+  onToggleCollapse?: () => void;
 }
 
-export function AppHeader({ onMenuClick }: AppHeaderProps) {
+export function AppHeader({ onMenuClick, onToggleCollapse }: AppHeaderProps) {
   const { toast } = useToast();
   const { items, clear } = useActivity();
 

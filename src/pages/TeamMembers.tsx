@@ -8,14 +8,17 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { AppHeader } from '@/components/layout/AppHeader';
 import { AppSidebar } from '@/components/layout/AppSidebar';
+import { AppHeader } from '@/components/layout/AppHeader';
+import { useSidebarState } from '@/hooks/useSidebarState';
+import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function TeamMembers() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useSidebarState();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string | undefined>(undefined);
 
@@ -131,8 +134,16 @@ export default function TeamMembers() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppSidebar open={sidebarOpen} onOpenChange={setSidebarOpen} />
-      <div className="lg:pl-64">
+      <AppSidebar 
+        open={sidebarOpen} 
+        onOpenChange={setSidebarOpen}
+        collapsed={collapsed}
+        onCollapsedChange={setCollapsed}
+      />
+      <div className={cn(
+        "transition-all duration-200 ease-in-out",
+        collapsed ? "lg:pl-16" : "lg:pl-64"
+      )}>
         <AppHeader onMenuClick={() => setSidebarOpen(true)} />
         <main className="p-6 space-y-6">
           <div className="flex items-center justify-between">

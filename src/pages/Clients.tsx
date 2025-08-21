@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Filter, Download, Users, Settings, X } from 'lucide-react';
+import { Plus, Search, Filter, Download, Users, Settings, X, Clock, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useSidebarState } from '@/hooks/useSidebarState';
+import { cn } from '@/lib/utils';
 import { clientsApi, lookupsApi, stagingApi, supabase } from '@/lib/supabase-client';
 import { getGlobalTotals, getFilteredTotals, getClientsPage } from '@/lib/clientsData';
 import { diagnostics } from '@/lib/diagnostics';
@@ -35,8 +37,11 @@ export default function Clients() {
   const [selectedClients, setSelectedClients] = useState<Array<{ client_code: string; client_id: number }>>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useSidebarState();
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortByRecentUpdates, setSortByRecentUpdates] = useState(false);
+  const [previousSort, setPreviousSort] = useState({ sortBy: 'client_name', sortOrder: 'asc' as 'asc' | 'desc' });
 
   // Enable realtime notifications
   useRealtimeNotifications();
@@ -113,11 +118,33 @@ export default function Clients() {
 
   // Handle sorting
   const handleSort = (column: string) => {
+    // If we're in "recent updates" mode and user clicks a column, exit that mode
+    if (sortByRecentUpdates) {
+      setSortByRecentUpdates(false);
+    }
+    
     if (sortBy === column) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
       setSortBy(column);
       setSortOrder('asc');
+    }
+    setCurrentPage(0);
+  };
+
+  // Handle "Sort by recent updates" toggle
+  const handleToggleRecentSort = () => {
+    if (!sortByRecentUpdates) {
+      // Store current sort before switching to recent
+      setPreviousSort({ sortBy, sortOrder });
+      setSortBy('updated_at');
+      setSortOrder('desc');
+      setSortByRecentUpdates(true);
+    } else {
+      // Restore previous sort
+      setSortBy(previousSort.sortBy);
+      setSortOrder(previousSort.sortOrder);
+      setSortByRecentUpdates(false);
     }
     setCurrentPage(0);
   };
@@ -202,9 +229,17 @@ export default function Clients() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-background">
-        <AppSidebar open={sidebarOpen} onOpenChange={setSidebarOpen} />
+        <AppSidebar 
+          open={sidebarOpen} 
+          onOpenChange={setSidebarOpen} 
+          collapsed={collapsed}
+          onCollapsedChange={setCollapsed}
+        />
         
-        <div className="flex flex-col lg:pl-64">
+        <div className={cn(
+          "flex flex-col transition-all duration-200 ease-in-out",
+          collapsed ? "lg:pl-16" : "lg:pl-64"
+        )}>
           <AppHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
           
           <main className="flex-1 p-6">
@@ -312,41 +347,66 @@ export default function Clients() {
                   <TabsTrigger value="staging">Staging Data</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="clients" className="space-y-4">
-                  {/* Filters */}
-                  {showFilters && (
-                    <ClientsFilters
-                      filters={filters}
-                      onFiltersChange={handleFiltersChange}
-                      teamMembers={teamMembers || []}
-                      relationshipStatuses={relationshipStatuses || []}
-                      relationshipTypes={relationshipTypes || []}
-                    />
-                  )}
+                  <TabsContent value="clients" className="space-y-4">
+                    {/* Filters */}
+                    {showFilters && (
+                      <ClientsFilters
+                        filters={filters}
+                        onFiltersChange={handleFiltersChange}
+                        teamMembers={teamMembers || []}
+                        relationshipStatuses={relationshipStatuses || []}
+                        relationshipTypes={relationshipTypes || []}
+                      />
+                    )}
 
-                  {/* Bulk Actions */}
-                  {selectedClients.length > 0 && (
-                    <BulkActions
-                      selectedCount={selectedClients.length}
-                      onBulkUpdate={handleBulkUpdate}
-                      onClearSelection={() => setSelectedClients([])}
-                      teamMembers={teamMembers || []}
-                    />
-                  )}
+                    {/* Bulk Actions */}
+                    {selectedClients.length > 0 && (
+                      <BulkActions
+                        selectedCount={selectedClients.length}
+                        onBulkUpdate={handleBulkUpdate}
+                        onClearSelection={() => setSelectedClients([])}
+                        teamMembers={teamMembers || []}
+                      />
+                    )}
 
-                  {/* Row Count Display */}
-                  <div className="flex items-center justify-between py-2 px-4 bg-muted/50 rounded-md" role="status" aria-live="polite">
-                    <span className="text-sm text-muted-foreground">
-                      Showing {clientsLoading ? '...' : clientsData?.pageCount ?? 0} of{' '}
-                      {clientsLoading ? '...' : totalCount} 
-                      {Object.keys(filters).length > 0 && filteredTotals && (
-                        <span> (filtered from {globalTotals?.total ?? 0} total)</span>
-                      )}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      Page {currentPage + 1} of {totalPages}
-                    </span>
-                  </div>
+                    {/* Table Controls */}
+                    <div className="flex items-center justify-between">
+                      {/* Row Count Display */}
+                      <div className="py-2" role="status" aria-live="polite">
+                        <span className="text-sm text-muted-foreground">
+                          Showing {clientsLoading ? '...' : clientsData?.pageCount ?? 0} of{' '}
+                          {clientsLoading ? '...' : totalCount} 
+                          {Object.keys(filters).length > 0 && filteredTotals && (
+                            <span> (filtered from {globalTotals?.total ?? 0} total)</span>
+                          )}
+                        </span>
+                        <span className="text-sm text-muted-foreground ml-4">
+                          Page {currentPage + 1} of {totalPages}
+                        </span>
+                      </div>
+
+                      {/* Sort by Recent Updates Button */}
+                      <Button
+                        variant={sortByRecentUpdates ? "default" : "outline"}
+                        size="sm"
+                        onClick={handleToggleRecentSort}
+                        className="gap-2"
+                        aria-pressed={sortByRecentUpdates}
+                        aria-label={sortByRecentUpdates ? 'Stop sorting by recent updates' : 'Sort by recent updates'}
+                      >
+                        {sortByRecentUpdates ? (
+                          <>
+                            <RotateCcw className="h-4 w-4" />
+                            Recent Updates
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="h-4 w-4" />
+                            Sort by Recent Updates
+                          </>
+                        )}
+                      </Button>
+                    </div>
 
                   {/* Clients Table */}
                   <ClientsTable

@@ -14,8 +14,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { AuthGuard } from '@/components/auth/AuthGuard';
-import { AppHeader } from '@/components/layout/AppHeader';
 import { AppSidebar } from '@/components/layout/AppSidebar';
+import { AppHeader } from '@/components/layout/AppHeader';
+import { useSidebarState } from '@/hooks/useSidebarState';
+import { cn } from '@/lib/utils';
 import { stagingApi } from '@/lib/supabase-client';
 
 const STAGING_PER_PAGE = 50;
@@ -23,6 +25,7 @@ const STAGING_PER_PAGE = 50;
 export default function StagingData() {
   const [currentPage, setCurrentPage] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useSidebarState();
 
   // Fetch staging data
   const { data: stagingData, isLoading, error } = useQuery({
@@ -53,9 +56,17 @@ export default function StagingData() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-background">
-        <AppSidebar open={sidebarOpen} onOpenChange={setSidebarOpen} />
+        <AppSidebar 
+          open={sidebarOpen} 
+          onOpenChange={setSidebarOpen}
+          collapsed={collapsed}
+          onCollapsedChange={setCollapsed}
+        />
         
-        <div className="flex flex-col lg:pl-64">
+        <div className={cn(
+          "flex flex-col transition-all duration-200 ease-in-out",
+          collapsed ? "lg:pl-16" : "lg:pl-64"
+        )}>
           <AppHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
           
           <main className="flex-1 p-6">

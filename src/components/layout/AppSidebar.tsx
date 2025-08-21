@@ -9,14 +9,19 @@ import {
   Home,
   TestTube,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface AppSidebarProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  collapsed: boolean;
+  onCollapsedChange: (collapsed: boolean) => void;
 }
 
 const navigation = [
@@ -46,7 +51,7 @@ const navigation = [
   },
 ];
 
-export function AppSidebar({ open, onOpenChange }: AppSidebarProps) {
+export function AppSidebar({ open, onOpenChange, collapsed, onCollapsedChange }: AppSidebarProps) {
   const location = useLocation();
 
   return (
@@ -62,21 +67,49 @@ export function AppSidebar({ open, onOpenChange }: AppSidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 bg-card border-r transform transition-transform duration-200 ease-in-out lg:translate-x-0',
-          open ? 'translate-x-0' : '-translate-x-full'
+          'fixed inset-y-0 left-0 z-50 bg-card border-r transform transition-all duration-200 ease-in-out lg:translate-x-0',
+          'lg:transition-width',
+          collapsed ? 'lg:w-16' : 'lg:w-64',
+          open ? 'translate-x-0 w-64' : '-translate-x-full w-64'
         )}
+        role="navigation"
+        aria-label="Main navigation"
+        aria-expanded={open}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
-          <div>
-            <h2 className="text-lg font-semibold">Clients Admin</h2>
-            <p className="text-sm text-muted-foreground">Internal Tool</p>
-          </div>
+          {!collapsed && (
+            <div>
+              <h2 className="text-lg font-semibold">Clients Admin</h2>
+              <p className="text-sm text-muted-foreground">Internal Tool</p>
+            </div>
+          )}
+          {collapsed && (
+            <div className="w-full flex justify-center">
+              <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+                <Users className="h-4 w-4 text-primary-foreground" />
+              </div>
+            </div>
+          )}
+          
+          {/* Desktop collapse toggle */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="hidden lg:flex"
+            onClick={() => onCollapsedChange(!collapsed)}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
+          
+          {/* Mobile close button */}
           <Button
             variant="ghost"
             size="sm"
             className="lg:hidden"
             onClick={() => onOpenChange(false)}
+            aria-label="Close sidebar"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -93,12 +126,14 @@ export function AppSidebar({ open, onOpenChange }: AppSidebarProps) {
                 (item.href === '/team-members' && location.pathname.startsWith('/team-members')) ||
                 (item.href === '/db-self-test' && location.pathname.startsWith('/db-self-test'));
               
-              return (
+              const linkContent = (
                 <Link
                   key={item.name}
                   to={item.href}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors',
+                    'flex items-center rounded-lg transition-colors',
+                    collapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2',
+                    'text-sm font-medium',
                     isActive
                       ? 'bg-primary text-primary-foreground'
                       : 'text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -109,25 +144,42 @@ export function AppSidebar({ open, onOpenChange }: AppSidebarProps) {
                     }
                   }}
                 >
-                  <Icon className="h-5 w-5" />
-                  <span>{item.name}</span>
+                  <Icon className="h-5 w-5 shrink-0" />
+                  {!collapsed && <span>{item.name}</span>}
                 </Link>
               );
+
+              if (collapsed) {
+                return (
+                  <Tooltip key={item.name}>
+                    <TooltipTrigger asChild>
+                      {linkContent}
+                    </TooltipTrigger>
+                    <TooltipContent side="right" sideOffset={8}>
+                      <p>{item.name}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
+
+              return linkContent;
             })}
           </div>
         </nav>
 
         {/* Footer */}
-        <div className="p-6 border-t">
-          <Card className="p-4 bg-muted/50">
-            <div className="text-sm">
-              <div className="font-medium">Need Help?</div>
-              <div className="text-muted-foreground text-xs mt-1">
-                Contact the development team for support
+        {!collapsed && (
+          <div className="p-6 border-t">
+            <Card className="p-4 bg-muted/50">
+              <div className="text-sm">
+                <div className="font-medium">Need Help?</div>
+                <div className="text-muted-foreground text-xs mt-1">
+                  Contact the development team for support
+                </div>
               </div>
-            </div>
-          </Card>
-        </div>
+            </Card>
+          </div>
+        )}
       </aside>
     </>
   );
