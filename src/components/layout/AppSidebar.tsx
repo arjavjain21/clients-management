@@ -9,6 +9,8 @@ import {
   Home,
   TestTube,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -17,6 +19,8 @@ import { Badge } from '@/components/ui/badge';
 interface AppSidebarProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  collapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 const navigation = [
@@ -46,7 +50,7 @@ const navigation = [
   },
 ];
 
-export function AppSidebar({ open, onOpenChange }: AppSidebarProps) {
+export function AppSidebar({ open, onOpenChange, collapsed = false, onCollapsedChange }: AppSidebarProps) {
   const location = useLocation();
 
   return (
@@ -62,24 +66,38 @@ export function AppSidebar({ open, onOpenChange }: AppSidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 bg-card border-r transform transition-transform duration-200 ease-in-out lg:translate-x-0',
-          open ? 'translate-x-0' : '-translate-x-full'
+          'fixed inset-y-0 left-0 z-50 bg-card border-r transform transition-all duration-200 ease-in-out',
+          open ? 'translate-x-0' : '-translate-x-full',
+          'lg:translate-x-0',
+          collapsed ? 'w-16' : 'w-64'
         )}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
-          <div>
+          <div className={cn('transition-all', collapsed && 'opacity-0 pointer-events-none hidden lg:block')}>
             <h2 className="text-lg font-semibold">Clients Admin</h2>
             <p className="text-sm text-muted-foreground">Internal Tool</p>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="lg:hidden"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden lg:inline-flex"
+              onClick={() => onCollapsedChange?.(!collapsed)}
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="lg:hidden"
+              onClick={() => onOpenChange(false)}
+              title="Close"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
 
         {/* Navigation */}
@@ -110,7 +128,7 @@ export function AppSidebar({ open, onOpenChange }: AppSidebarProps) {
                   }}
                 >
                   <Icon className="h-5 w-5" />
-                  <span>{item.name}</span>
+                  <span className={cn('transition-all', collapsed && 'hidden lg:inline-block lg:opacity-0 lg:w-0')}>{item.name}</span>
                 </Link>
               );
             })}

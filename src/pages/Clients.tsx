@@ -35,6 +35,7 @@ export default function Clients() {
   const [selectedClients, setSelectedClients] = useState<Array<{ client_code: string; client_id: number }>>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -202,9 +203,9 @@ export default function Clients() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-background">
-        <AppSidebar open={sidebarOpen} onOpenChange={setSidebarOpen} />
+        <AppSidebar open={sidebarOpen} onOpenChange={setSidebarOpen} collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
         
-        <div className="flex flex-col lg:pl-64">
+        <div className="flex flex-col" style={{ paddingLeft: sidebarCollapsed ? '4rem' : '16rem' }}>
           <AppHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
           
           <main className="flex-1 p-6">
@@ -346,6 +347,18 @@ export default function Clients() {
                     <span className="text-sm text-muted-foreground">
                       Page {currentPage + 1} of {totalPages}
                     </span>
+                  </div>
+
+                  {/* Table toolbar */}
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      variant={sortBy === 'updated_at' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleSort('updated_at')}
+                      title="Sort by Last Updated"
+                    >
+                      Last Updated
+                    </Button>
                   </div>
 
                   {/* Clients Table */}
