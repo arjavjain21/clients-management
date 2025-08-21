@@ -281,6 +281,7 @@ export default function TeamMembers() {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-background">
       <AppSidebar open={sidebarOpen} onOpenChange={setSidebarOpen} />
       <div className="lg:pl-64">
@@ -422,5 +423,6 @@ export default function TeamMembers() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
