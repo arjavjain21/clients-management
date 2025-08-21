@@ -399,7 +399,12 @@ export default function TeamMembers() {
         </main>
       </div>
     </div>
-    <Dialog open={removeDialog.open} onOpenChange={(open) => !removeDialog.loading && setRemoveDialog((d) => ({ ...d, open }))}>
+    <Dialog
+      open={removeDialog.open}
+      onOpenChange={(nextOpen) => {
+        if (!removeDialog.loading) setRemoveDialog((d) => ({ ...d, open: nextOpen }));
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Remove Team Member</DialogTitle>
