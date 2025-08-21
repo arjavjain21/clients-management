@@ -95,6 +95,14 @@ export default function TeamMembers() {
     mutationFn: deleteTeamMember,
     onSuccess: async (removed: any) => {
       toast({ title: 'Team member removed', description: removed.full_name });
+
+      // Optimistically remove from current cached lists
+      queryClient.setQueriesData({ queryKey: ['team-members'] }, (old: any) => {
+        if (Array.isArray(old)) {
+          return old.filter((m) => m.id !== removed.id);
+        }
+        return old;
+      });
       
       // Send removal notification email
       try {
