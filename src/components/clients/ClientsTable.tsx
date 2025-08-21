@@ -170,14 +170,33 @@ export function ClientsTable({
                 <TableHead>
                   <SortableHeader column="client_name">Name</SortableHeader>
                 </TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Company</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Weekend</TableHead>
-                <TableHead>AM</TableHead>
-                <TableHead>IM</TableHead>
-                <TableHead className="text-right">Target/Month</TableHead>
+                <TableHead>
+                  <SortableHeader column="client_email">Email</SortableHeader>
+                </TableHead>
+                <TableHead>
+                  <SortableHeader column="client_company_name">Company</SortableHeader>
+                </TableHead>
+                <TableHead>
+                  <SortableHeader column="relationship_status">Status</SortableHeader>
+                </TableHead>
+                <TableHead>
+                  <SortableHeader column="relationship_type">Type</SortableHeader>
+                </TableHead>
+                <TableHead>
+                  <SortableHeader column="weekend_sending_mode">Weekend</SortableHeader>
+                </TableHead>
+                <TableHead>
+                  <SortableHeader column="assigned_account_manager_name">AM</SortableHeader>
+                </TableHead>
+                <TableHead>
+                  <SortableHeader column="assigned_inbox_manager_name">IM</SortableHeader>
+                </TableHead>
+                <TableHead className="text-right">
+                  <SortableHeader column="avg_dollar_gen_pm">Target/Month</SortableHeader>
+                </TableHead>
+                <TableHead>
+                  <SortableHeader column="updated_at">Last Updated</SortableHeader>
+                </TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -287,6 +306,23 @@ export function ClientsTable({
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm text-muted-foreground">
+                      {client.updated_at ? (
+                        <time dateTime={client.updated_at}>
+                          {new Date(client.updated_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </time>
+                      ) : (
+                        '—'
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Button
