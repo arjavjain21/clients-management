@@ -86,10 +86,10 @@ export function ClientEditDialog({
         client_website: client.client_website || '',
         relationship_status: client.relationship_status || '',
         relationship_type: client.relationship_type || '',
-        closelix: client.closelix === true ? 'true' : client.closelix === false ? 'false' : '',
         weekend_sending_mode: client.weekend_sending_mode || 'inherit',
         assigned_account_manager_id: client.assigned_account_manager_id || '',
         assigned_inbox_manager_id: client.assigned_inbox_manager_id || '',
+        avg_dollar_gen_pm: client.avg_dollar_gen_pm ?? '',
         phone_number: client.phone_number || '',
         booking_link: client.booking_link || '',
         recurring_cost_usd: client.recurring_cost_usd ?? '',
@@ -102,8 +102,8 @@ export function ClientEditDialog({
     setSaving(true);
     try {
       // Normalize values: empty strings -> null, numbers -> number, booleans -> boolean, UUID empties -> null
-      const numericFields = new Set(['recurring_cost_usd']);
-      const booleanFields = new Set(['onboarding_activated', 'closelix']);
+      const numericFields = new Set(['recurring_cost_usd', 'avg_dollar_gen_pm']);
+      const booleanFields = new Set(['onboarding_activated']);
       const uuidFields = new Set(['assigned_account_manager_id', 'assigned_inbox_manager_id']);
 
       const normalizeValue = (key: string, value: any) => {
@@ -190,6 +190,7 @@ Client Code: ${client.client_code}
 Client ID: ${client.client_id}
 Company: ${formData.client_company_name ?? "-"}
 Relationship: ${formData.relationship_status ?? "-"} (${formData.relationship_type ?? "-"})
+Target (avg_dollar_gen_pm): ${formData.avg_dollar_gen_pm ?? "-"}
 Weekend Sending: ${formData.weekend_sending_mode ?? "-"}
 
 Regards,
@@ -328,32 +329,14 @@ Operations`
                   ))}
                 </SelectContent>
               </Select>
+            </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="closelix">Closelix</Label>
-            <Select
-              value={formData.closelix}
-              onValueChange={(value) => setFormData({ ...formData, closelix: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="true">True</SelectItem>
-                <SelectItem value="false">False</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="weekend_sending_mode">Weekend Sending</Label>
-            <Select
-              value={formData.weekend_sending_mode}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="weekend_sending_mode">Weekend Sending</Label>
+              <Select
+                value={formData.weekend_sending_mode}
                 onValueChange={(value) => setFormData({ ...formData, weekend_sending_mode: value })}
               >
                 <SelectTrigger>
@@ -419,18 +402,28 @@ Operations`
             </div>
           </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="recurring_cost_usd">Recurring Cost (USD)</Label>
-            <Input
-              id="recurring_cost_usd"
-              type="number"
-              value={formData.recurring_cost_usd}
-              onChange={(e) => setFormData({ ...formData, recurring_cost_usd: parseFloat(e.target.value) || 0 })}
-              placeholder="2500"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="avg_dollar_gen_pm">Average $/Month Target</Label>
+              <Input
+                id="avg_dollar_gen_pm"
+                type="number"
+                value={formData.avg_dollar_gen_pm}
+                onChange={(e) => setFormData({ ...formData, avg_dollar_gen_pm: parseFloat(e.target.value) || 0 })}
+                placeholder="5000"
+              />
+            </div>
+            <div>
+              <Label htmlFor="recurring_cost_usd">Recurring Cost (USD)</Label>
+              <Input
+                id="recurring_cost_usd"
+                type="number"
+                value={formData.recurring_cost_usd}
+                onChange={(e) => setFormData({ ...formData, recurring_cost_usd: parseFloat(e.target.value) || 0 })}
+                placeholder="2500"
+              />
+            </div>
           </div>
-        </div>
         </div>
 
         <DialogFooter className="flex justify-between">

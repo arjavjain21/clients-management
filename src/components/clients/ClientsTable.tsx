@@ -1,6 +1,6 @@
 import React from 'react';
 // Note: No routing from row actions; edit opens overlay via onRowClick
-import { ChevronUp, ChevronDown, ExternalLink, Mail, Globe, Check } from 'lucide-react';
+import { ChevronUp, ChevronDown, ExternalLink, Mail, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -182,9 +182,6 @@ export function ClientsTable({
                 <TableHead>
                   <SortableHeader column="relationship_type">Type</SortableHeader>
                 </TableHead>
-                <TableHead className="text-center">
-                  <SortableHeader column="closelix">Closelix</SortableHeader>
-                </TableHead>
                 <TableHead>
                   <SortableHeader column="weekend_sending_mode">Weekend</SortableHeader>
                 </TableHead>
@@ -193,6 +190,9 @@ export function ClientsTable({
                 </TableHead>
                 <TableHead>
                   <SortableHeader column="assigned_inbox_manager_name">IM</SortableHeader>
+                </TableHead>
+                <TableHead className="text-right">
+                  <SortableHeader column="avg_dollar_gen_pm">Target/Month</SortableHeader>
                 </TableHead>
                 <TableHead>
                   <SortableHeader column="updated_at">Last Updated</SortableHeader>
@@ -249,9 +249,6 @@ export function ClientsTable({
                       </Badge>
                     ) : null}
                   </TableCell>
-                  <TableCell className="text-center">
-                    {client.closelix ? <Check className="h-4 w-4 mx-auto" /> : null}
-                  </TableCell>
                   <TableCell>
                     {getWeekendSendingBadge(client.weekend_sending_mode)}
                   </TableCell>
@@ -300,6 +297,15 @@ export function ClientsTable({
                       }
                       return <span className="text-muted-foreground text-sm">Unassigned</span>;
                     })()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {client.avg_dollar_gen_pm ? (
+                      <span className="font-mono text-sm">
+                        ${client.avg_dollar_gen_pm.toLocaleString()}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="text-sm text-muted-foreground">

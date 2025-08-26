@@ -34,7 +34,6 @@ export type Database = {
           recurring_cost_usd: number | null
           relationship_status: string | null
           relationship_type: string | null
-          closelix: boolean | null
           updated_at: string
           website_canonical: string | null
           weekend_sending_effective: boolean | null
@@ -59,7 +58,6 @@ export type Database = {
           recurring_cost_usd?: number | null
           relationship_status?: string | null
           relationship_type?: string | null
-          closelix?: boolean | null
           updated_at?: string
           website_canonical?: string | null
           weekend_sending_effective?: boolean | null
@@ -84,7 +82,6 @@ export type Database = {
           recurring_cost_usd?: number | null
           relationship_status?: string | null
           relationship_type?: string | null
-          closelix?: boolean | null
           updated_at?: string
           website_canonical?: string | null
           weekend_sending_effective?: boolean | null

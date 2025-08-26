@@ -7,7 +7,6 @@ export interface Client {
   client_website?: string;
   relationship_status?: string;
   relationship_type?: string;
-  closelix?: boolean;
   onboarding_activated?: boolean;
   onboarding_date?: string;
   recurring_cost_usd?: number;
@@ -62,7 +61,6 @@ export interface ClientStagingRow {
   booking_link?: string;
   phone_number?: string;
   avg_dollar_gen_pm?: string;
-  closelix?: string;
   exit_date?: string;
   assigned_account_manager?: string;
   assigned_inbox_manager?: string;
@@ -107,7 +105,6 @@ export interface ClientFilters {
   weekend_sending_mode?: string;
   assigned_account_manager_id?: string;
   assigned_inbox_manager_id?: string;
-  closelix?: string;
 }
 
 export interface ClientUpdateData {
@@ -117,7 +114,6 @@ export interface ClientUpdateData {
   avg_dollar_gen_pm?: number;
   assigned_account_manager_id?: string | null;
   assigned_inbox_manager_id?: string | null;
-  closelix?: boolean;
 }
 
 export interface BulkUpdateData {
