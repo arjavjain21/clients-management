@@ -118,6 +118,24 @@ export function ClientsFilters({
           </Select>
         </div>
 
+        {/* Closelix */}
+        <div className="space-y-2">
+          <Label>Closelix</Label>
+          <Select
+            value={filters.closelix || ''}
+            onValueChange={(value) => updateFilter('closelix', value === 'all' ? undefined : value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="true">True</SelectItem>
+              <SelectItem value="false">False</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Weekend Sending */}
         <div className="space-y-2">
           <Label>Weekend Sending</Label>

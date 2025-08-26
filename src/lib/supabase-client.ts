@@ -48,7 +48,11 @@ export const clientsApi = {
     if (filters.relationship_type) {
       query = query.eq('relationship_type', filters.relationship_type);
     }
-    
+
+    if (filters.closelix) {
+      query = query.eq('closelix', filters.closelix === 'true');
+    }
+
     if (filters.weekend_sending_mode) {
       query = query.eq('weekend_sending_mode', filters.weekend_sending_mode);
     }
