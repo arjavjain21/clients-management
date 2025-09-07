@@ -191,9 +191,6 @@ export function ClientsTable({
                 <TableHead>
                   <SortableHeader column="assigned_inbox_manager_name">IM</SortableHeader>
                 </TableHead>
-                <TableHead className="text-right">
-                  <SortableHeader column="avg_dollar_gen_pm">Target/Month</SortableHeader>
-                </TableHead>
                 <TableHead>
                   <SortableHeader column="updated_at">Last Updated</SortableHeader>
                 </TableHead>
@@ -297,15 +294,6 @@ export function ClientsTable({
                       }
                       return <span className="text-muted-foreground text-sm">Unassigned</span>;
                     })()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {client.avg_dollar_gen_pm ? (
-                      <span className="font-mono text-sm">
-                        ${client.avg_dollar_gen_pm.toLocaleString()}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
                   </TableCell>
                   <TableCell>
                     <div className="text-sm text-muted-foreground">
