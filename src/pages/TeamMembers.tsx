@@ -13,6 +13,7 @@ import { AppHeader } from '@/components/layout/AppHeader';
 import { useSidebarState } from '@/hooks/useSidebarState';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { INACTIVE_STATUSES } from '@/config/statusBuckets';
 
 export default function TeamMembers() {
   const { toast } = useToast();
@@ -27,7 +28,7 @@ export default function TeamMembers() {
     queryFn: () => listTeamMembers({ search, role: roleFilter }),
   });
 
-  // Per-member client counts (sum of AM + IM assignments)
+  // Per-member client counts (sum of AM + IM assignments) - ACTIVE clients only
   const { data: memberClientCounts = {}, isLoading: countsLoading } = useQuery({
     queryKey: ['team-members-client-counts', members.map(m => m.id).join(',')],
     enabled: members.length > 0,
@@ -39,16 +40,27 @@ export default function TeamMembers() {
             const [amRes, imRes] = await Promise.all([
               supabase
                 .from('clients')
-                .select('client_id', { count: 'exact', head: true })
-                .eq('assigned_account_manager_id', m.id!),
+                .select('relationship_status, exit_date', { count: 'exact' })
+                .eq('assigned_account_manager_id', m.id!)
+                .is('exit_date', null),
               supabase
                 .from('clients')
-                .select('client_id', { count: 'exact', head: true })
-                .eq('assigned_inbox_manager_id', m.id!),
+                .select('relationship_status, exit_date', { count: 'exact' })
+                .eq('assigned_inbox_manager_id', m.id!)
+                .is('exit_date', null),
             ]);
             if (amRes.error) throw amRes.error;
             if (imRes.error) throw imRes.error;
-            const total = (amRes.count ?? 0) + (imRes.count ?? 0);
+            
+            // Filter out inactive statuses on the frontend
+            const activeAM = (amRes.data || []).filter(c => 
+              !c.relationship_status || !INACTIVE_STATUSES.includes(c.relationship_status.toUpperCase())
+            ).length;
+            const activeIM = (imRes.data || []).filter(c => 
+              !c.relationship_status || !INACTIVE_STATUSES.includes(c.relationship_status.toUpperCase())
+            ).length;
+            
+            const total = activeAM + activeIM;
             return [m.id!, total] as const;
           })
       );
