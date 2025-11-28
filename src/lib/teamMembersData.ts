@@ -1,3 +1,4 @@
+import { INACTIVE_STATUSES } from '@/config/statusBuckets';
 import { supabase } from '@/integrations/supabase/client';
 
 export type TeamMember = {
@@ -75,4 +76,27 @@ export async function deleteTeamMember(id: string) {
 
   // Return the pre-fetched member info (may be undefined if not found)
   return memberBefore ?? { id, full_name: '(removed)', email: '', role: 'other', active: false };
+}
+
+export async function getActiveClientAssignments(memberId: string) {
+  const { data, error } = await supabase
+    .from('clients')
+    .select('client_name')
+    .or(
+      [
+        `assigned_account_manager_id.eq.${memberId}`,
+        `assigned_inbox_manager_id.eq.${memberId}`,
+        `assigned_sdr_id.eq.${memberId}`,
+      ].join(',')
+    )
+    .is('exit_date', null)
+    .not('relationship_status', 'in', `(${INACTIVE_STATUSES.map((s) => `"${s}"`).join(',')})`);
+
+  if (error) throw error;
+
+  const names = (data ?? [])
+    .map((c) => c.client_name)
+    .filter((name): name is string => Boolean(name));
+
+  return Array.from(new Set(names));
 }
