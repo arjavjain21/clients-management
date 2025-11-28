@@ -46,6 +46,7 @@ export function ClientsFilters({
 
   const accountManagers = teamMembers.filter(tm => tm.role === 'account_manager');
   const inboxManagers = teamMembers.filter(tm => tm.role === 'inbox_manager');
+  const sdrs = teamMembers.filter(tm => tm.role === 'sdr');
 
   return (
     <Card className="p-6">
@@ -175,6 +176,28 @@ export function ClientsFilters({
               {inboxManagers.map((manager) => (
                 <SelectItem key={manager.id} value={manager.id}>
                   {manager.full_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* SDR */}
+        <div className="space-y-2">
+          <Label>SDR</Label>
+          <Select
+            value={filters.assigned_sdr_id || ''}
+            onValueChange={(value) => updateFilter('assigned_sdr_id', value === 'all' ? undefined : value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All SDRs" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All SDRs</SelectItem>
+              <SelectItem value="unassigned">Unassigned</SelectItem>
+              {sdrs.map((sdr) => (
+                <SelectItem key={sdr.id} value={sdr.id}>
+                  {sdr.full_name}
                 </SelectItem>
               ))}
             </SelectContent>

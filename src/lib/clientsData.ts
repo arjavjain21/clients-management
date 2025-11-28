@@ -38,6 +38,14 @@ function applyFilters(query: any, filters?: ClientFilters) {
     }
   }
   
+  if (filters.assigned_sdr_id) {
+    if (filters.assigned_sdr_id === 'unassigned') {
+      query = query.is('assigned_sdr_id', null);
+    } else {
+      query = query.eq('assigned_sdr_id', filters.assigned_sdr_id);
+    }
+  }
+  
   return query;
 }
 

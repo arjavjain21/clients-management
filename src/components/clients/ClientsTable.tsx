@@ -192,6 +192,9 @@ export function ClientsTable({
                   <SortableHeader column="assigned_inbox_manager_name">IM</SortableHeader>
                 </TableHead>
                 <TableHead>
+                  <SortableHeader column="assigned_sdr_name">SDR</SortableHeader>
+                </TableHead>
+                <TableHead>
                   <SortableHeader column="updated_at">Last Updated</SortableHeader>
                 </TableHead>
                 <TableHead>Actions</TableHead>
@@ -289,6 +292,29 @@ export function ClientsTable({
                         return (
                           <div className="text-sm">
                             {im.full_name || '—'} {im.email ? <span className="text-muted-foreground">· {im.email}</span> : null}
+                          </div>
+                        );
+                      }
+                      return <span className="text-muted-foreground text-sm">Unassigned</span>;
+                    })()}
+                  </TableCell>
+                  <TableCell>
+                    {(() => {
+                      const nameFromClient = (client as any).assigned_sdr_name as string | undefined;
+                      const emailFromClient = (client as any).assigned_sdr_email as string | undefined;
+                      const hasClientFields = !!(nameFromClient || emailFromClient);
+                      if (hasClientFields) {
+                        return (
+                          <div className="text-sm">
+                            {nameFromClient || '—'} {emailFromClient ? <span className="text-muted-foreground">· {emailFromClient}</span> : null}
+                          </div>
+                        );
+                      }
+                      const sdr = idToMember.get((client as any).assigned_sdr_id);
+                      if (sdr?.full_name || sdr?.email) {
+                        return (
+                          <div className="text-sm">
+                            {sdr.full_name || '—'} {sdr.email ? <span className="text-muted-foreground">· {sdr.email}</span> : null}
                           </div>
                         );
                       }
