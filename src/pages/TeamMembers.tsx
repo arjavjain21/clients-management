@@ -28,7 +28,7 @@ export default function TeamMembers() {
     queryFn: () => listTeamMembers({ search, role: roleFilter }),
   });
 
-  // Per-member client counts (sum of AM + IM assignments) - ACTIVE clients only
+  // Per-member client counts (sum of AM + IM + SDR assignments) - ACTIVE clients only
   const { data: memberClientCounts = {}, isLoading: countsLoading } = useQuery({
     queryKey: ['team-members-client-counts', members.map(m => m.id).join(',')],
     enabled: members.length > 0,
@@ -37,7 +37,7 @@ export default function TeamMembers() {
         members
           .filter((m) => !!m.id)
           .map(async (m) => {
-            const [amRes, imRes] = await Promise.all([
+            const [amRes, imRes, sdrRes] = await Promise.all([
               supabase
                 .from('clients')
                 .select('relationship_status, exit_date', { count: 'exact' })
@@ -48,9 +48,15 @@ export default function TeamMembers() {
                 .select('relationship_status, exit_date', { count: 'exact' })
                 .eq('assigned_inbox_manager_id', m.id!)
                 .is('exit_date', null),
+              supabase
+                .from('clients')
+                .select('relationship_status, exit_date', { count: 'exact' })
+                .eq('assigned_sdr_id', m.id!)
+                .is('exit_date', null),
             ]);
             if (amRes.error) throw amRes.error;
             if (imRes.error) throw imRes.error;
+            if (sdrRes.error) throw sdrRes.error;
             
             // Filter out inactive statuses on the frontend
             const activeAM = (amRes.data || []).filter(c => 
@@ -59,8 +65,11 @@ export default function TeamMembers() {
             const activeIM = (imRes.data || []).filter(c => 
               !c.relationship_status || !INACTIVE_STATUSES.includes(c.relationship_status.toUpperCase())
             ).length;
+            const activeSDR = (sdrRes.data || []).filter(c => 
+              !c.relationship_status || !INACTIVE_STATUSES.includes(c.relationship_status.toUpperCase())
+            ).length;
             
-            const total = activeAM + activeIM;
+            const total = activeAM + activeIM + activeSDR;
             return [m.id!, total] as const;
           })
       );
@@ -82,6 +91,7 @@ export default function TeamMembers() {
       // Also refresh role-specific queries for client overlay selects
       queryClient.invalidateQueries({ queryKey: ['team-members', { role: 'account_manager' }] });
       queryClient.invalidateQueries({ queryKey: ['team-members', { role: 'inbox_manager' }] });
+      queryClient.invalidateQueries({ queryKey: ['team-members', { role: 'sdr' }] });
       setForm({ full_name: '', email: '', role: 'account_manager' });
 
       // Non-blocking welcome email
@@ -135,6 +145,7 @@ export default function TeamMembers() {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['team-members', { role: 'account_manager' }] });
       queryClient.invalidateQueries({ queryKey: ['team-members', { role: 'inbox_manager' }] });
+      queryClient.invalidateQueries({ queryKey: ['team-members', { role: 'sdr' }] });
     },
     onError: (e: any) =>
       toast({
@@ -199,6 +210,7 @@ export default function TeamMembers() {
                     <SelectContent>
                       <SelectItem value="account_manager">Account Manager</SelectItem>
                       <SelectItem value="inbox_manager">Inbox Manager</SelectItem>
+                      <SelectItem value="sdr">SDR</SelectItem>
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
@@ -233,6 +245,7 @@ export default function TeamMembers() {
                     <SelectItem value="all">All roles</SelectItem>
                     <SelectItem value="account_manager">Account Manager</SelectItem>
                     <SelectItem value="inbox_manager">Inbox Manager</SelectItem>
+                    <SelectItem value="sdr">SDR</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>

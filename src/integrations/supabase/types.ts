@@ -22,6 +22,9 @@ export type Database = {
           assigned_inbox_manager_email: string | null
           assigned_inbox_manager_id: string | null
           assigned_inbox_manager_name: string | null
+          assigned_sdr_email: string | null
+          assigned_sdr_id: string | null
+          assigned_sdr_name: string | null
           avg_dollar_gen_pm: number | null
           booking_link: string | null
           client_code: string
@@ -52,6 +55,9 @@ export type Database = {
           assigned_inbox_manager_email?: string | null
           assigned_inbox_manager_id?: string | null
           assigned_inbox_manager_name?: string | null
+          assigned_sdr_email?: string | null
+          assigned_sdr_id?: string | null
+          assigned_sdr_name?: string | null
           avg_dollar_gen_pm?: number | null
           booking_link?: string | null
           client_code: string
@@ -82,6 +88,9 @@ export type Database = {
           assigned_inbox_manager_email?: string | null
           assigned_inbox_manager_id?: string | null
           assigned_inbox_manager_name?: string | null
+          assigned_sdr_email?: string | null
+          assigned_sdr_id?: string | null
+          assigned_sdr_name?: string | null
           avg_dollar_gen_pm?: number | null
           booking_link?: string | null
           client_code?: string
@@ -130,6 +139,20 @@ export type Database = {
           {
             foreignKeyName: "clients_assigned_inbox_manager_id_fkey"
             columns: ["assigned_inbox_manager_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_assigned_sdr_id_fkey"
+            columns: ["assigned_sdr_id"]
+            isOneToOne: false
+            referencedRelation: "team_member_load"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "clients_assigned_sdr_id_fkey"
+            columns: ["assigned_sdr_id"]
             isOneToOne: false
             referencedRelation: "team_members"
             referencedColumns: ["id"]
