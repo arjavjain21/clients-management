@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { listTeamMembers, createTeamMember, deleteTeamMember } from '@/lib/teamMembersData';
+import { listTeamMembers, createTeamMember, deleteTeamMember, getActiveClientAssignments } from '@/lib/teamMembersData';
 import { sendAssignmentEmail } from '@/lib/email';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -274,6 +274,25 @@ export default function TeamMembers() {
                         variant="destructive"
                         size="sm"
                         onClick={async () => {
+                          try {
+                            const assignments = await getActiveClientAssignments(member.id!);
+                            if (assignments.length > 0) {
+                              toast({
+                                variant: 'destructive',
+                                title: "Can't remove member",
+                                description: `Can't remove – ${assignments.join(', ')} are assigned. Please change assignments and try again.`,
+                              });
+                              return;
+                            }
+                          } catch (e: any) {
+                            toast({
+                              variant: 'destructive',
+                              title: 'Failed to check assignments',
+                              description: e.message || 'Unknown error',
+                            });
+                            return;
+                          }
+
                           if (!confirm(`Remove ${member.full_name}? They will be unassigned from all clients.`)) return;
                           deleteMutation.mutate(member.id!);
                         }}
