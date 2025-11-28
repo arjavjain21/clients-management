@@ -4,7 +4,7 @@ export type TeamMember = {
   id?: string;
   full_name: string;
   email: string;
-  role: 'account_manager' | 'inbox_manager' | 'other';
+  role: 'account_manager' | 'inbox_manager' | 'sdr' | 'other';
   active?: boolean;
 };
 
@@ -52,7 +52,7 @@ export async function deleteTeamMember(id: string) {
     .eq('id', id)
     .maybeSingle();
 
-  // Unassign from clients (both roles)
+  // Unassign from clients (all roles)
   await supabase
     .from("clients")
     .update({ assigned_account_manager_id: null })
@@ -61,6 +61,10 @@ export async function deleteTeamMember(id: string) {
     .from("clients")
     .update({ assigned_inbox_manager_id: null })
     .eq("assigned_inbox_manager_id", id);
+  await supabase
+    .from("clients")
+    .update({ assigned_sdr_id: null })
+    .eq("assigned_sdr_id", id);
   
   // Delete member; tolerate zero-row delete
   const { error } = await supabase

@@ -58,6 +58,12 @@ export function ClientEditDialog({
     enabled: open,
   });
 
+  const { data: sdrs = [] } = useQuery({
+    queryKey: ['team-members', { role: 'sdr' }],
+    queryFn: () => listTeamMembers({ role: 'sdr' }),
+    enabled: open,
+  });
+
   const { data: relationshipStatuses = [] } = useQuery({
     queryKey: ['relationship-statuses'],
     queryFn: async () => {
@@ -89,6 +95,7 @@ export function ClientEditDialog({
         weekend_sending_mode: client.weekend_sending_mode || 'inherit',
         assigned_account_manager_id: client.assigned_account_manager_id || '',
         assigned_inbox_manager_id: client.assigned_inbox_manager_id || '',
+        assigned_sdr_id: (client as any).assigned_sdr_id || '',
         avg_dollar_gen_pm: client.avg_dollar_gen_pm ?? '',
         phone_number: client.phone_number || '',
         booking_link: client.booking_link || '',
@@ -104,7 +111,7 @@ export function ClientEditDialog({
       // Normalize values: empty strings -> null, numbers -> number, booleans -> boolean, UUID empties -> null
       const numericFields = new Set(['recurring_cost_usd', 'avg_dollar_gen_pm']);
       const booleanFields = new Set(['onboarding_activated']);
-      const uuidFields = new Set(['assigned_account_manager_id', 'assigned_inbox_manager_id']);
+      const uuidFields = new Set(['assigned_account_manager_id', 'assigned_inbox_manager_id', 'assigned_sdr_id']);
 
       const normalizeValue = (key: string, value: any) => {
         if (value === '') return null;
@@ -173,6 +180,14 @@ export function ClientEditDialog({
       ) {
         const im = inboxManagers.find(m => m.id === patch.assigned_inbox_manager_id);
         if (im) toNotify.push({ email: im.email, full_name: im.full_name });
+      }
+
+      if (
+        patch.assigned_sdr_id &&
+        patch.assigned_sdr_id !== (initial as any)?.assigned_sdr_id
+      ) {
+        const sdr = sdrs.find(m => m.id === patch.assigned_sdr_id);
+        if (sdr) toNotify.push({ email: sdr.email, full_name: sdr.full_name });
       }
       
       // Send notification emails
@@ -393,6 +408,28 @@ Operations`
                 <SelectContent>
                   <SelectItem value="unassigned">Unassigned</SelectItem>
                   {inboxManagers.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="assigned_sdr_id">SDR</Label>
+              <Select
+                value={formData.assigned_sdr_id}
+                onValueChange={(value) => setFormData({ ...formData, assigned_sdr_id: value === 'unassigned' ? null : value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select SDR" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {sdrs.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
                       {member.full_name}
                     </SelectItem>
