@@ -16,8 +16,12 @@ export type Database = {
     Tables: {
       clients: {
         Row: {
+          assigned_account_manager_email: string | null
           assigned_account_manager_id: string | null
+          assigned_account_manager_name: string | null
+          assigned_inbox_manager_email: string | null
           assigned_inbox_manager_id: string | null
+          assigned_inbox_manager_name: string | null
           avg_dollar_gen_pm: number | null
           booking_link: string | null
           client_code: string
@@ -26,6 +30,7 @@ export type Database = {
           client_id: number
           client_name: string | null
           client_website: string | null
+          closelix: boolean | null
           created_at: string
           exit_date: string | null
           onboarding_activated: boolean | null
@@ -34,14 +39,19 @@ export type Database = {
           recurring_cost_usd: number | null
           relationship_status: string | null
           relationship_type: string | null
+          team_member_id: number | null
           updated_at: string
           website_canonical: string | null
           weekend_sending_effective: boolean | null
           weekend_sending_mode: string | null
         }
         Insert: {
+          assigned_account_manager_email?: string | null
           assigned_account_manager_id?: string | null
+          assigned_account_manager_name?: string | null
+          assigned_inbox_manager_email?: string | null
           assigned_inbox_manager_id?: string | null
+          assigned_inbox_manager_name?: string | null
           avg_dollar_gen_pm?: number | null
           booking_link?: string | null
           client_code: string
@@ -50,6 +60,7 @@ export type Database = {
           client_id: number
           client_name?: string | null
           client_website?: string | null
+          closelix?: boolean | null
           created_at?: string
           exit_date?: string | null
           onboarding_activated?: boolean | null
@@ -58,14 +69,19 @@ export type Database = {
           recurring_cost_usd?: number | null
           relationship_status?: string | null
           relationship_type?: string | null
+          team_member_id?: number | null
           updated_at?: string
           website_canonical?: string | null
           weekend_sending_effective?: boolean | null
           weekend_sending_mode?: string | null
         }
         Update: {
+          assigned_account_manager_email?: string | null
           assigned_account_manager_id?: string | null
+          assigned_account_manager_name?: string | null
+          assigned_inbox_manager_email?: string | null
           assigned_inbox_manager_id?: string | null
+          assigned_inbox_manager_name?: string | null
           avg_dollar_gen_pm?: number | null
           booking_link?: string | null
           client_code?: string
@@ -74,6 +90,7 @@ export type Database = {
           client_id?: number
           client_name?: string | null
           client_website?: string | null
+          closelix?: boolean | null
           created_at?: string
           exit_date?: string | null
           onboarding_activated?: boolean | null
@@ -82,6 +99,7 @@ export type Database = {
           recurring_cost_usd?: number | null
           relationship_status?: string | null
           relationship_type?: string | null
+          team_member_id?: number | null
           updated_at?: string
           website_canonical?: string | null
           weekend_sending_effective?: boolean | null
@@ -129,6 +147,34 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "relationship_types"
             referencedColumns: ["name"]
+          },
+          {
+            foreignKeyName: "fk_clients_am"
+            columns: ["assigned_account_manager_id"]
+            isOneToOne: false
+            referencedRelation: "team_member_load"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "fk_clients_am"
+            columns: ["assigned_account_manager_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_clients_im"
+            columns: ["assigned_inbox_manager_id"]
+            isOneToOne: false
+            referencedRelation: "team_member_load"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "fk_clients_im"
+            columns: ["assigned_inbox_manager_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -277,6 +323,7 @@ export type Database = {
           client_name: string | null
           client_website: string | null
           exit_date: string | null
+          id_primary_key: number
           onboarding_activated: string | null
           onboarding_date: string | null
           phone_number: string | null
@@ -297,6 +344,7 @@ export type Database = {
           client_name?: string | null
           client_website?: string | null
           exit_date?: string | null
+          id_primary_key?: number
           onboarding_activated?: string | null
           onboarding_date?: string | null
           phone_number?: string | null
@@ -317,6 +365,7 @@ export type Database = {
           client_name?: string | null
           client_website?: string | null
           exit_date?: string | null
+          id_primary_key?: number
           onboarding_activated?: string | null
           onboarding_date?: string | null
           phone_number?: string | null
@@ -403,6 +452,7 @@ export type Database = {
           id: string
           role: string | null
           round_robin_group: string | null
+          team_member_id: number | null
           timezone: string | null
           weight: number
         }
@@ -416,6 +466,7 @@ export type Database = {
           id?: string
           role?: string | null
           round_robin_group?: string | null
+          team_member_id?: number | null
           timezone?: string | null
           weight?: number
         }
@@ -429,6 +480,7 @@ export type Database = {
           id?: string
           role?: string | null
           round_robin_group?: string | null
+          team_member_id?: number | null
           timezone?: string | null
           weight?: number
         }
@@ -460,22 +512,11 @@ export type Database = {
         Args: { p_client_code: string; p_client_id: number; p_group: string }
         Returns: string
       }
-      current_user_uid: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      next_round_robin_member: {
-        Args: { p_group: string }
-        Returns: string
-      }
-      normalize_url: {
-        Args: { u: string }
-        Returns: string
-      }
-      to_bool: {
-        Args: { x: string }
-        Returns: boolean
-      }
+      current_user_uid: { Args: never; Returns: string }
+      next_round_robin_member: { Args: { p_group: string }; Returns: string }
+      norm_name: { Args: { txt: string }; Returns: string }
+      normalize_url: { Args: { u: string }; Returns: string }
+      to_bool: { Args: { x: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
