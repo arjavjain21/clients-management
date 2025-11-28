@@ -17,6 +17,9 @@ export interface Client {
   exit_date?: string;
   assigned_account_manager_id?: string;
   assigned_inbox_manager_id?: string;
+  assigned_sdr_id?: string;
+  assigned_sdr_name?: string;
+  assigned_sdr_email?: string;
   created_at: string;
   updated_at: string;
   website_canonical?: string;
@@ -27,7 +30,7 @@ export interface TeamMember {
   id: string;
   full_name: string;
   email: string;
-  role: 'account_manager' | 'inbox_manager' | 'other';
+  role: 'account_manager' | 'inbox_manager' | 'sdr' | 'other';
   active: boolean;
   round_robin_group?: string;
   capacity_clients?: number;
@@ -105,6 +108,7 @@ export interface ClientFilters {
   weekend_sending_mode?: string;
   assigned_account_manager_id?: string;
   assigned_inbox_manager_id?: string;
+  assigned_sdr_id?: string;
 }
 
 export interface ClientUpdateData {
@@ -114,6 +118,7 @@ export interface ClientUpdateData {
   avg_dollar_gen_pm?: number;
   assigned_account_manager_id?: string | null;
   assigned_inbox_manager_id?: string | null;
+  assigned_sdr_id?: string | null;
 }
 
 export interface BulkUpdateData {
