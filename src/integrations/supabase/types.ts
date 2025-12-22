@@ -19,6 +19,7 @@ export type Database = {
           assigned_account_manager_email: string | null
           assigned_account_manager_id: string | null
           assigned_account_manager_name: string | null
+          assigned_am_slack_uid: string | null
           assigned_inbox_manager_email: string | null
           assigned_inbox_manager_id: string | null
           assigned_inbox_manager_name: string | null
@@ -52,6 +53,7 @@ export type Database = {
           assigned_account_manager_email?: string | null
           assigned_account_manager_id?: string | null
           assigned_account_manager_name?: string | null
+          assigned_am_slack_uid?: string | null
           assigned_inbox_manager_email?: string | null
           assigned_inbox_manager_id?: string | null
           assigned_inbox_manager_name?: string | null
@@ -85,6 +87,7 @@ export type Database = {
           assigned_account_manager_email?: string | null
           assigned_account_manager_id?: string | null
           assigned_account_manager_name?: string | null
+          assigned_am_slack_uid?: string | null
           assigned_inbox_manager_email?: string | null
           assigned_inbox_manager_id?: string | null
           assigned_inbox_manager_name?: string | null
@@ -475,6 +478,7 @@ export type Database = {
           id: string
           role: string | null
           round_robin_group: string | null
+          slack_uuid: string | null
           team_member_id: number | null
           timezone: string | null
           weight: number
@@ -489,6 +493,7 @@ export type Database = {
           id?: string
           role?: string | null
           round_robin_group?: string | null
+          slack_uuid?: string | null
           team_member_id?: number | null
           timezone?: string | null
           weight?: number
@@ -503,6 +508,7 @@ export type Database = {
           id?: string
           role?: string | null
           round_robin_group?: string | null
+          slack_uuid?: string | null
           team_member_id?: number | null
           timezone?: string | null
           weight?: number
