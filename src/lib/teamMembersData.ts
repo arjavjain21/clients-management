@@ -67,12 +67,21 @@ export async function deleteTeamMember(id: string) {
     .update({ assigned_sdr_id: null })
     .eq("assigned_sdr_id", id);
   
-  // Delete member; tolerate zero-row delete
-  const { error } = await supabase
+  // First try hard delete
+  const { error: deleteError } = await supabase
     .from("team_members")
     .delete()
     .eq("id", id);
-  if (error) throw error;
+  
+  // If delete fails (e.g., RLS or FK constraints), soft-delete by setting active = false
+  if (deleteError) {
+    console.warn('Hard delete failed, falling back to soft-delete:', deleteError.message);
+    const { error: updateError } = await supabase
+      .from("team_members")
+      .update({ active: false })
+      .eq("id", id);
+    if (updateError) throw updateError;
+  }
 
   // Return the pre-fetched member info (may be undefined if not found)
   return memberBefore ?? { id, full_name: '(removed)', email: '', role: 'other', active: false };
