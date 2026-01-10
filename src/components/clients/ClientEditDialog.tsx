@@ -180,9 +180,12 @@ export function ClientEditDialog({
         if (im) toNotify.push({ email: im.email, full_name: im.full_name });
       }
 
+      // Only send SDR email if it's an actual SDR assignment (not "No SDR" sentinel)
+      const NO_SDR_SENTINEL = '00000000-0000-0000-0000-000000000000';
       if (
         patch.assigned_sdr_id &&
-        patch.assigned_sdr_id !== (initial as any)?.assigned_sdr_id
+        patch.assigned_sdr_id !== (initial as any)?.assigned_sdr_id &&
+        patch.assigned_sdr_id !== NO_SDR_SENTINEL
       ) {
         const sdr = sdrs.find(m => m.id === patch.assigned_sdr_id);
         if (sdr) toNotify.push({ email: sdr.email, full_name: sdr.full_name });
@@ -418,14 +421,18 @@ Operations`
             <div>
               <Label htmlFor="assigned_sdr_id">SDR</Label>
               <Select
-                value={formData.assigned_sdr_id}
-                onValueChange={(value) => setFormData({ ...formData, assigned_sdr_id: value === 'unassigned' ? null : value })}
+                value={formData.assigned_sdr_id || 'unassigned'}
+                onValueChange={(value) => setFormData({ 
+                  ...formData, 
+                  assigned_sdr_id: value === 'unassigned' ? null : value 
+                })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select SDR" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="unassigned">Unassigned</SelectItem>
+                  <SelectItem value="00000000-0000-0000-0000-000000000000">No SDR</SelectItem>
                   {sdrs.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
                       {member.full_name}
