@@ -3,11 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
   Users,
-  Database,
-  BarChart3,
   Settings,
-  Home,
-  TestTube,
   X,
   ChevronLeft,
   ChevronRight,
@@ -32,21 +28,9 @@ const navigation = [
     current: true,
   },
   {
-    name: 'Staging (Bulk Imports)',
-    href: '/staging',
-    icon: Database,
-    current: false,
-  },
-  {
     name: 'Team Members',
     href: '/team-members',
     icon: Users,
-    current: false,
-  },
-  {
-    name: 'Database Self-Test',
-    href: '/db-self-test',
-    icon: TestTube,
     current: false,
   },
 ];
@@ -153,9 +137,7 @@ export function AppSidebar({ open, onOpenChange, collapsed, onCollapsedChange }:
               const Icon = item.icon;
               const isActive = location.pathname === item.href || 
                 (item.href === '/clients' && location.pathname.startsWith('/clients')) ||
-                (item.href === '/staging' && location.pathname.startsWith('/staging')) ||
-                (item.href === '/team-members' && location.pathname.startsWith('/team-members')) ||
-                (item.href === '/db-self-test' && location.pathname.startsWith('/db-self-test'));
+                (item.href === '/team-members' && location.pathname.startsWith('/team-members'));
               
               const linkContent = (
                 <Link

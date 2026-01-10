@@ -96,10 +96,8 @@ export function ClientEditDialog({
         assigned_account_manager_id: client.assigned_account_manager_id || '',
         assigned_inbox_manager_id: client.assigned_inbox_manager_id || '',
         assigned_sdr_id: (client as any).assigned_sdr_id || '',
-        avg_dollar_gen_pm: client.avg_dollar_gen_pm ?? '',
         phone_number: client.phone_number || '',
         booking_link: client.booking_link || '',
-        recurring_cost_usd: client.recurring_cost_usd ?? '',
       });
     }
   }, [client]);
@@ -108,8 +106,8 @@ export function ClientEditDialog({
     if (!client) return;
     setSaving(true);
     try {
-      // Normalize values: empty strings -> null, numbers -> number, booleans -> boolean, UUID empties -> null
-      const numericFields = new Set(['recurring_cost_usd', 'avg_dollar_gen_pm']);
+      // Normalize values: empty strings -> null, booleans -> boolean, UUID empties -> null
+      const numericFields = new Set<string>();
       const booleanFields = new Set(['onboarding_activated']);
       const uuidFields = new Set(['assigned_account_manager_id', 'assigned_inbox_manager_id', 'assigned_sdr_id']);
 
@@ -205,7 +203,6 @@ Client Code: ${client.client_code}
 Client ID: ${client.client_id}
 Company: ${formData.client_company_name ?? "-"}
 Relationship: ${formData.relationship_status ?? "-"} (${formData.relationship_type ?? "-"})
-Target (avg_dollar_gen_pm): ${formData.avg_dollar_gen_pm ?? "-"}
 Weekend Sending: ${formData.weekend_sending_mode ?? "-"}
 
 Regards,
@@ -439,28 +436,6 @@ Operations`
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="avg_dollar_gen_pm">Average $/Month Target</Label>
-              <Input
-                id="avg_dollar_gen_pm"
-                type="number"
-                value={formData.avg_dollar_gen_pm}
-                onChange={(e) => setFormData({ ...formData, avg_dollar_gen_pm: parseFloat(e.target.value) || 0 })}
-                placeholder="5000"
-              />
-            </div>
-            <div>
-              <Label htmlFor="recurring_cost_usd">Recurring Cost (USD)</Label>
-              <Input
-                id="recurring_cost_usd"
-                type="number"
-                value={formData.recurring_cost_usd}
-                onChange={(e) => setFormData({ ...formData, recurring_cost_usd: parseFloat(e.target.value) || 0 })}
-                placeholder="2500"
-              />
-            </div>
-          </div>
         </div>
 
         <DialogFooter className="flex justify-between">
