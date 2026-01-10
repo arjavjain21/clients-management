@@ -1,23 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Filter, Download, Users, Settings, X, Clock, RotateCcw } from 'lucide-react';
+import { Search, Filter, Download, Users, Settings, X, Clock, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useSidebarState } from '@/hooks/useSidebarState';
 import { cn } from '@/lib/utils';
-import { clientsApi, lookupsApi, stagingApi, supabase } from '@/lib/supabase-client';
+import { clientsApi, lookupsApi } from '@/lib/supabase-client';
 import { getGlobalTotals, getFilteredTotals, getClientsPage } from '@/lib/clientsData';
 import { diagnostics } from '@/lib/diagnostics';
 import type { Client, ClientFilters, TeamMember } from '@/types/database';
 import { ClientsTable } from '@/components/clients/ClientsTable';
 import { ClientsFilters } from '@/components/clients/ClientsFilters';
 import { BulkActions } from '@/components/clients/BulkActions';
-import { StagingViewer } from '@/components/clients/StagingViewer';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { AppSidebar } from '@/components/layout/AppSidebar';
@@ -29,7 +25,6 @@ const CLIENTS_PER_PAGE = 50;
 export default function Clients() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('clients');
   const [currentPage, setCurrentPage] = useState(0);
   const [filters, setFilters] = useState<ClientFilters>({});
   const [sortBy, setSortBy] = useState('client_name');
@@ -340,95 +335,84 @@ export default function Clients() {
                 </Card>
               </div>
 
-              {/* Main Tabs */}
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList>
-                  <TabsTrigger value="clients">Clients</TabsTrigger>
-                  <TabsTrigger value="staging">Staging Data</TabsTrigger>
-                </TabsList>
-
-                  <TabsContent value="clients" className="space-y-4">
-                    {/* Filters */}
-                    {showFilters && (
-                      <ClientsFilters
-                        filters={filters}
-                        onFiltersChange={handleFiltersChange}
-                        teamMembers={teamMembers || []}
-                        relationshipStatuses={relationshipStatuses || []}
-                        relationshipTypes={relationshipTypes || []}
-                      />
-                    )}
-
-                    {/* Bulk Actions */}
-                    {selectedClients.length > 0 && (
-                      <BulkActions
-                        selectedCount={selectedClients.length}
-                        onBulkUpdate={handleBulkUpdate}
-                        onClearSelection={() => setSelectedClients([])}
-                        teamMembers={teamMembers || []}
-                      />
-                    )}
-
-                    {/* Table Controls */}
-                    <div className="flex items-center justify-between">
-                      {/* Row Count Display */}
-                      <div className="py-2" role="status" aria-live="polite">
-                        <span className="text-sm text-muted-foreground">
-                          Showing {clientsLoading ? '...' : clientsData?.pageCount ?? 0} of{' '}
-                          {clientsLoading ? '...' : totalCount} 
-                          {Object.keys(filters).length > 0 && filteredTotals && (
-                            <span> (filtered from {globalTotals?.total ?? 0} total)</span>
-                          )}
-                        </span>
-                        <span className="text-sm text-muted-foreground ml-4">
-                          Page {currentPage + 1} of {totalPages}
-                        </span>
-                      </div>
-
-                      {/* Sort by Recent Updates Button */}
-                      <Button
-                        variant={sortByRecentUpdates ? "default" : "outline"}
-                        size="sm"
-                        onClick={handleToggleRecentSort}
-                        className="gap-2"
-                        aria-pressed={sortByRecentUpdates}
-                        aria-label={sortByRecentUpdates ? 'Stop sorting by recent updates' : 'Sort by recent updates'}
-                      >
-                        {sortByRecentUpdates ? (
-                          <>
-                            <RotateCcw className="h-4 w-4" />
-                            Recent Updates
-                          </>
-                        ) : (
-                          <>
-                            <Clock className="h-4 w-4" />
-                            Sort by Recent Updates
-                          </>
-                        )}
-                      </Button>
-                    </div>
-
-                  {/* Clients Table */}
-                  <ClientsTable
-                    clients={clients}
-                    loading={clientsLoading}
-                    selectedClients={selectedClients}
-                    onSelectedClientsChange={setSelectedClients}
-                    sortBy={sortBy}
-                    sortOrder={sortOrder}
-                    onSort={handleSort}
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
+              {/* Main Content */}
+              <div className="space-y-4">
+                {/* Filters */}
+                {showFilters && (
+                  <ClientsFilters
+                    filters={filters}
+                    onFiltersChange={handleFiltersChange}
                     teamMembers={teamMembers || []}
-                    onRowClick={setEditingClient}
+                    relationshipStatuses={relationshipStatuses || []}
+                    relationshipTypes={relationshipTypes || []}
                   />
-                </TabsContent>
+                )}
 
-                <TabsContent value="staging" className="space-y-4">
-                  <StagingViewer />
-                </TabsContent>
-              </Tabs>
+                {/* Bulk Actions */}
+                {selectedClients.length > 0 && (
+                  <BulkActions
+                    selectedCount={selectedClients.length}
+                    onBulkUpdate={handleBulkUpdate}
+                    onClearSelection={() => setSelectedClients([])}
+                    teamMembers={teamMembers || []}
+                  />
+                )}
+
+                {/* Table Controls */}
+                <div className="flex items-center justify-between">
+                  {/* Row Count Display */}
+                  <div className="py-2" role="status" aria-live="polite">
+                    <span className="text-sm text-muted-foreground">
+                      Showing {clientsLoading ? '...' : clientsData?.pageCount ?? 0} of{' '}
+                      {clientsLoading ? '...' : totalCount} 
+                      {Object.keys(filters).length > 0 && filteredTotals && (
+                        <span> (filtered from {globalTotals?.total ?? 0} total)</span>
+                      )}
+                    </span>
+                    <span className="text-sm text-muted-foreground ml-4">
+                      Page {currentPage + 1} of {totalPages}
+                    </span>
+                  </div>
+
+                  {/* Sort by Recent Updates Button */}
+                  <Button
+                    variant={sortByRecentUpdates ? "default" : "outline"}
+                    size="sm"
+                    onClick={handleToggleRecentSort}
+                    className="gap-2"
+                    aria-pressed={sortByRecentUpdates}
+                    aria-label={sortByRecentUpdates ? 'Stop sorting by recent updates' : 'Sort by recent updates'}
+                  >
+                    {sortByRecentUpdates ? (
+                      <>
+                        <RotateCcw className="h-4 w-4" />
+                        Recent Updates
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="h-4 w-4" />
+                        Sort by Recent Updates
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Clients Table */}
+                <ClientsTable
+                  clients={clients}
+                  loading={clientsLoading}
+                  selectedClients={selectedClients}
+                  onSelectedClientsChange={setSelectedClients}
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                  onSort={handleSort}
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  teamMembers={teamMembers || []}
+                  onRowClick={setEditingClient}
+                />
+              </div>
               </div>
             </main>
           </div>

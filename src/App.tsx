@@ -7,9 +7,7 @@ import { ActivityProvider } from "@/context/activity";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Clients from "./pages/Clients";
-import StagingData from "./pages/StagingData";
 import TeamMembers from "./pages/TeamMembers";
-import DbSelfTest from "./pages/DbSelfTest";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,9 +23,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/clients" element={<Clients />} />
-            <Route path="/staging" element={<StagingData />} />
             <Route path="/team-members" element={<TeamMembers />} />
-            <Route path="/db-self-test" element={<DbSelfTest />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
