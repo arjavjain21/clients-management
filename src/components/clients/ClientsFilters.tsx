@@ -195,6 +195,7 @@ export function ClientsFilters({
             <SelectContent>
               <SelectItem value="all">All SDRs</SelectItem>
               <SelectItem value="unassigned">Unassigned</SelectItem>
+              <SelectItem value="00000000-0000-0000-0000-000000000000">No SDR</SelectItem>
               {sdrs.map((sdr) => (
                 <SelectItem key={sdr.id} value={sdr.id}>
                   {sdr.full_name}
