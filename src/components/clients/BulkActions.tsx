@@ -3,6 +3,7 @@ import { Users, X, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -72,6 +73,9 @@ export function BulkActions({
         (newUpdates as any).weekend_sending_mode = finalValue as 'true' | 'false' | 'inherit' | null;
       } else if (field === 'assigned_account_manager_id' || field === 'assigned_inbox_manager_id') {
         (newUpdates as any)[field] = finalValue as string | null;
+      } else if (field === 'weekly_target') {
+        const num = parseFloat(value);
+        (newUpdates as any).weekly_target = Number.isFinite(num) ? num : null;
       } else {
         (newUpdates as any)[field] = finalValue;
       }
@@ -173,6 +177,17 @@ export function BulkActions({
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Weekly Target */}
+                <div className="space-y-2">
+                  <Label>Weekly Target</Label>
+                  <Input
+                    type="number"
+                    placeholder="No change"
+                    value={updates.weekly_target ?? ''}
+                    onChange={(e) => updateField('weekly_target', e.target.value)}
+                  />
                 </div>
               </div>
 

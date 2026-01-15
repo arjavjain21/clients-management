@@ -98,6 +98,7 @@ export function ClientEditDialog({
         assigned_sdr_id: (client as any).assigned_sdr_id || '',
         phone_number: client.phone_number || '',
         booking_link: client.booking_link || '',
+        weekly_target: (client as any).weekly_target ?? '',
       });
     }
   }, [client]);
@@ -107,7 +108,7 @@ export function ClientEditDialog({
     setSaving(true);
     try {
       // Normalize values: empty strings -> null, booleans -> boolean, UUID empties -> null
-      const numericFields = new Set<string>();
+      const numericFields = new Set<string>(['weekly_target']);
       const booleanFields = new Set(['onboarding_activated']);
       const uuidFields = new Set(['assigned_account_manager_id', 'assigned_inbox_manager_id', 'assigned_sdr_id']);
 
@@ -440,6 +441,16 @@ Operations`
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <Label htmlFor="weekly_target">Weekly Target</Label>
+              <Input
+                id="weekly_target"
+                type="number"
+                value={formData.weekly_target}
+                onChange={(e) => setFormData({ ...formData, weekly_target: e.target.value })}
+                placeholder="e.g. 100"
+              />
             </div>
           </div>
 
