@@ -195,6 +195,9 @@ export function ClientsTable({
                   <SortableHeader column="assigned_sdr_name">SDR</SortableHeader>
                 </TableHead>
                 <TableHead>
+                  <SortableHeader column="weekly_target">Weekly Target</SortableHeader>
+                </TableHead>
+                <TableHead>
                   <SortableHeader column="updated_at">Last Updated</SortableHeader>
                 </TableHead>
                 <TableHead>Actions</TableHead>
@@ -320,6 +323,13 @@ export function ClientsTable({
                       }
                       return <span className="text-muted-foreground text-sm">Unassigned</span>;
                     })()}
+                  </TableCell>
+                  <TableCell>
+                    {(client as any).weekly_target != null ? (
+                      <span className="text-sm font-medium">{(client as any).weekly_target}</span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="text-sm text-muted-foreground">
