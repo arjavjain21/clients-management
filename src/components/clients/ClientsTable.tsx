@@ -1,6 +1,6 @@
 import React from 'react';
 // Note: No routing from row actions; edit opens overlay via onRowClick
-import { ChevronUp, ChevronDown, ExternalLink, Mail, Globe } from 'lucide-react';
+import { ChevronUp, ChevronDown, ExternalLink, Mail, Globe, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -325,11 +325,32 @@ export function ClientsTable({
                     })()}
                   </TableCell>
                   <TableCell>
-                    {(client as any).weekly_target != null ? (
-                      <span className="text-sm font-medium">{(client as any).weekly_target}</span>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">—</span>
-                    )}
+                    {(() => {
+                      const weeklyTarget = (client as any).weekly_target;
+                      const launchDate = (client as any).weekly_target_launch_date;
+                      
+                      if (launchDate) {
+                        // It's a launch date
+                        return (
+                          <div className="flex items-center gap-1 text-sm">
+                            <CalendarIcon className="h-3 w-3 text-primary" />
+                            <span className="text-primary font-medium">{weeklyTarget || `Launch ${new Date(launchDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}</span>
+                          </div>
+                        );
+                      }
+                      
+                      if (weeklyTarget != null && weeklyTarget !== '') {
+                        // It's a numeric target (stored as string)
+                        const numVal = parseFloat(weeklyTarget);
+                        if (!isNaN(numVal)) {
+                          return <span className="text-sm font-medium">{numVal.toLocaleString()}</span>;
+                        }
+                        // Fallback for non-numeric text
+                        return <span className="text-sm">{weeklyTarget}</span>;
+                      }
+                      
+                      return <span className="text-muted-foreground text-sm">—</span>;
+                    })()}
                   </TableCell>
                   <TableCell>
                     <div className="text-sm text-muted-foreground">

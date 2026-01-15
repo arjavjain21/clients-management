@@ -48,7 +48,8 @@ export type Database = {
           website_canonical: string | null
           weekend_sending_effective: boolean | null
           weekend_sending_mode: string | null
-          weekly_target: number | null
+          weekly_target: string | null
+          weekly_target_launch_date: string | null
         }
         Insert: {
           assigned_account_manager_email?: string | null
@@ -83,7 +84,8 @@ export type Database = {
           website_canonical?: string | null
           weekend_sending_effective?: boolean | null
           weekend_sending_mode?: string | null
-          weekly_target?: number | null
+          weekly_target?: string | null
+          weekly_target_launch_date?: string | null
         }
         Update: {
           assigned_account_manager_email?: string | null
@@ -118,7 +120,8 @@ export type Database = {
           website_canonical?: string | null
           weekend_sending_effective?: boolean | null
           weekend_sending_mode?: string | null
-          weekly_target?: number | null
+          weekly_target?: string | null
+          weekly_target_launch_date?: string | null
         }
         Relationships: [
           {
