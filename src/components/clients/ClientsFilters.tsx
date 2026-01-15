@@ -28,7 +28,7 @@ export function ClientsFilters({
   relationshipStatuses,
   relationshipTypes,
 }: ClientsFiltersProps) {
-  const updateFilter = (key: keyof ClientFilters, value: string | undefined) => {
+  const updateFilter = <K extends keyof ClientFilters>(key: K, value: ClientFilters[K] | undefined) => {
     const newFilters = { ...filters };
     if (value === '' || value === undefined) {
       delete newFilters[key];
@@ -201,6 +201,25 @@ export function ClientsFilters({
                   {sdr.full_name}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Weekly Target Type */}
+        <div className="space-y-2">
+          <Label>Weekly Target Type</Label>
+          <Select
+            value={filters.weekly_target_type || ''}
+            onValueChange={(value) => updateFilter('weekly_target_type', value === 'all' ? undefined : value as 'numeric' | 'launch' | 'none')}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All types</SelectItem>
+              <SelectItem value="numeric">Numeric Target</SelectItem>
+              <SelectItem value="launch">Future Launch</SelectItem>
+              <SelectItem value="none">Not Set</SelectItem>
             </SelectContent>
           </Select>
         </div>
