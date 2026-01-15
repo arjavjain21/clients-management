@@ -24,8 +24,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CalendarIcon } from 'lucide-react';
 import { RoundRobinAssignButton } from './RoundRobinAssignButton';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format, parse } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface ClientEditDialogProps {
   client: Client | null;
@@ -84,8 +88,14 @@ export function ClientEditDialog({
     enabled: open,
   });
 
+  // Determine if the weekly target is a launch date based on weekly_target_launch_date
+  const [weeklyTargetMode, setWeeklyTargetMode] = useState<'target' | 'launch'>('target');
+
   useEffect(() => {
     if (client) {
+      const hasLaunchDate = !!(client as any).weekly_target_launch_date;
+      setWeeklyTargetMode(hasLaunchDate ? 'launch' : 'target');
+      
       setFormData({
         client_company_name: client.client_company_name || '',
         client_email: client.client_email || '',
@@ -99,6 +109,7 @@ export function ClientEditDialog({
         phone_number: client.phone_number || '',
         booking_link: client.booking_link || '',
         weekly_target: (client as any).weekly_target ?? '',
+        weekly_target_launch_date: (client as any).weekly_target_launch_date || null,
       });
     }
   }, [client]);
@@ -108,16 +119,21 @@ export function ClientEditDialog({
     setSaving(true);
     try {
       // Normalize values: empty strings -> null, booleans -> boolean, UUID empties -> null
-      const numericFields = new Set<string>(['weekly_target']);
+      const textFields = new Set<string>(['weekly_target']);
+      const dateFields = new Set<string>(['weekly_target_launch_date']);
       const booleanFields = new Set(['onboarding_activated']);
       const uuidFields = new Set(['assigned_account_manager_id', 'assigned_inbox_manager_id', 'assigned_sdr_id']);
 
       const normalizeValue = (key: string, value: any) => {
         if (value === '') return null;
         if (uuidFields.has(key)) return value || null;
-        if (numericFields.has(key)) {
-          const num = typeof value === 'number' ? value : parseFloat(value);
-          return Number.isFinite(num) ? num : null;
+        if (textFields.has(key)) {
+          // For weekly_target, store as string
+          return value ? String(value) : null;
+        }
+        if (dateFields.has(key)) {
+          // For dates, ensure proper format or null
+          return value || null;
         }
         if (booleanFields.has(key)) {
           if (typeof value === 'boolean') return value;
@@ -128,13 +144,37 @@ export function ClientEditDialog({
         return value;
       };
 
+      // Handle weekly target based on mode
+      let weeklyTargetValue = formData.weekly_target;
+      let weeklyTargetLaunchDate = formData.weekly_target_launch_date;
+      
+      if (weeklyTargetMode === 'target') {
+        // Clear launch date if in target mode
+        weeklyTargetLaunchDate = null;
+      } else {
+        // In launch mode, format the display text and set the date
+        if (weeklyTargetLaunchDate) {
+          const launchDate = new Date(weeklyTargetLaunchDate);
+          weeklyTargetValue = `Launch ${format(launchDate, 'do MMM')}`;
+        } else {
+          weeklyTargetValue = null;
+        }
+      }
+      
+      // Update formData with computed values for patching
+      const patchFormData = {
+        ...formData,
+        weekly_target: weeklyTargetValue,
+        weekly_target_launch_date: weeklyTargetLaunchDate,
+      };
+
       // Build normalized current and initial, then compute minimal patch
-      const keys = Object.keys(formData);
+      const keys = Object.keys(patchFormData);
       const normalizedCurrent: Record<string, any> = {};
       const normalizedInitial: Record<string, any> = {};
       for (const key of keys) {
         if (["client_code","client_id","client_name","created_at","updated_at"].includes(key)) continue;
-        normalizedCurrent[key] = normalizeValue(key, (formData as any)[key]);
+        normalizedCurrent[key] = normalizeValue(key, (patchFormData as any)[key]);
         normalizedInitial[key] = normalizeValue(key, (initial as any)?.[key]);
       }
 
@@ -442,15 +482,75 @@ Operations`
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label htmlFor="weekly_target">Weekly Target</Label>
-              <Input
-                id="weekly_target"
-                type="number"
-                value={formData.weekly_target}
-                onChange={(e) => setFormData({ ...formData, weekly_target: e.target.value })}
-                placeholder="e.g. 100"
-              />
+            <div className="space-y-3">
+              <Label>Weekly Target</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={weeklyTargetMode === 'target' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setWeeklyTargetMode('target');
+                    setFormData({ ...formData, weekly_target_launch_date: null });
+                  }}
+                >
+                  Numeric Target
+                </Button>
+                <Button
+                  type="button"
+                  variant={weeklyTargetMode === 'launch' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setWeeklyTargetMode('launch');
+                    setFormData({ ...formData, weekly_target: '' });
+                  }}
+                >
+                  Future Launch
+                </Button>
+              </div>
+              
+              {weeklyTargetMode === 'target' ? (
+                <Input
+                  id="weekly_target"
+                  type="number"
+                  value={formData.weekly_target || ''}
+                  onChange={(e) => setFormData({ ...formData, weekly_target: e.target.value })}
+                  placeholder="e.g. 2500"
+                />
+              ) : (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formData.weekly_target_launch_date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.weekly_target_launch_date ? (
+                        format(new Date(formData.weekly_target_launch_date), 'PPP')
+                      ) : (
+                        <span>Pick a launch date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.weekly_target_launch_date ? new Date(formData.weekly_target_launch_date) : undefined}
+                      onSelect={(date) => {
+                        setFormData({
+                          ...formData,
+                          weekly_target_launch_date: date ? format(date, 'yyyy-MM-dd') : null,
+                        });
+                      }}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
           </div>
 

@@ -20,7 +20,8 @@ export interface Client {
   assigned_sdr_id?: string;
   assigned_sdr_name?: string;
   assigned_sdr_email?: string;
-  weekly_target?: number;
+  weekly_target?: string | null;
+  weekly_target_launch_date?: string | null;
   created_at: string;
   updated_at: string;
   website_canonical?: string;
@@ -120,7 +121,8 @@ export interface ClientUpdateData {
   assigned_account_manager_id?: string | null;
   assigned_inbox_manager_id?: string | null;
   assigned_sdr_id?: string | null;
-  weekly_target?: number | null;
+  weekly_target?: string | null;
+  weekly_target_launch_date?: string | null;
 }
 
 export interface BulkUpdateData {

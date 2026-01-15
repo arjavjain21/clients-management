@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Users, X, Save } from 'lucide-react';
+import { Users, X, Save, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -21,6 +22,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 import type { TeamMember, ClientUpdateData } from '@/types/database';
 
 interface BulkActionsProps {
@@ -39,6 +43,7 @@ export function BulkActions({
   const [isOpen, setIsOpen] = useState(false);
   const [updates, setUpdates] = useState<ClientUpdateData>({});
   const [loading, setLoading] = useState(false);
+  const [weeklyTargetMode, setWeeklyTargetMode] = useState<'no-change' | 'target' | 'launch'>('no-change');
 
   const accountManagers = teamMembers.filter(tm => tm.role === 'account_manager');
   const inboxManagers = teamMembers.filter(tm => tm.role === 'inbox_manager');
@@ -50,8 +55,21 @@ export function BulkActions({
 
     setLoading(true);
     try {
-      await onBulkUpdate(updates);
+      // Before submitting, handle weekly target based on mode
+      const finalUpdates = { ...updates };
+      if (weeklyTargetMode === 'no-change') {
+        delete finalUpdates.weekly_target;
+        delete finalUpdates.weekly_target_launch_date;
+      } else if (weeklyTargetMode === 'target') {
+        finalUpdates.weekly_target_launch_date = null;
+      } else if (weeklyTargetMode === 'launch' && finalUpdates.weekly_target_launch_date) {
+        const launchDate = new Date(finalUpdates.weekly_target_launch_date);
+        finalUpdates.weekly_target = `Launch ${format(launchDate, 'do MMM')}`;
+      }
+      
+      await onBulkUpdate(finalUpdates);
       setUpdates({});
+      setWeeklyTargetMode('no-change');
       setIsOpen(false);
     } catch (error) {
       // Error handling is done in the parent component
@@ -74,8 +92,10 @@ export function BulkActions({
       } else if (field === 'assigned_account_manager_id' || field === 'assigned_inbox_manager_id') {
         (newUpdates as any)[field] = finalValue as string | null;
       } else if (field === 'weekly_target') {
-        const num = parseFloat(value);
-        (newUpdates as any).weekly_target = Number.isFinite(num) ? num : null;
+        // Store as string
+        (newUpdates as any).weekly_target = value || null;
+      } else if (field === 'weekly_target_launch_date') {
+        (newUpdates as any).weekly_target_launch_date = value || null;
       } else {
         (newUpdates as any)[field] = finalValue;
       }
@@ -84,7 +104,7 @@ export function BulkActions({
     setUpdates(newUpdates);
   };
 
-  const hasUpdates = Object.keys(updates).length > 0;
+  const hasUpdates = Object.keys(updates).length > 0 || weeklyTargetMode !== 'no-change';
 
   return (
     <Card className="p-4 bg-primary/5 border-primary/20">
@@ -180,14 +200,87 @@ export function BulkActions({
                 </div>
 
                 {/* Weekly Target */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Label>Weekly Target</Label>
-                  <Input
-                    type="number"
-                    placeholder="No change"
-                    value={updates.weekly_target ?? ''}
-                    onChange={(e) => updateField('weekly_target', e.target.value)}
-                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={weeklyTargetMode === 'no-change' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setWeeklyTargetMode('no-change');
+                        const newUpdates = { ...updates };
+                        delete newUpdates.weekly_target;
+                        delete newUpdates.weekly_target_launch_date;
+                        setUpdates(newUpdates);
+                      }}
+                    >
+                      No Change
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={weeklyTargetMode === 'target' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setWeeklyTargetMode('target');
+                        setUpdates({ ...updates, weekly_target_launch_date: null });
+                      }}
+                    >
+                      Numeric
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={weeklyTargetMode === 'launch' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setWeeklyTargetMode('launch');
+                        setUpdates({ ...updates, weekly_target: '' });
+                      }}
+                    >
+                      Future Launch
+                    </Button>
+                  </div>
+                  
+                  {weeklyTargetMode === 'target' && (
+                    <Input
+                      type="number"
+                      placeholder="e.g. 2500"
+                      value={updates.weekly_target ?? ''}
+                      onChange={(e) => updateField('weekly_target', e.target.value)}
+                    />
+                  )}
+                  
+                  {weeklyTargetMode === 'launch' && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !updates.weekly_target_launch_date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {updates.weekly_target_launch_date ? (
+                            format(new Date(updates.weekly_target_launch_date), 'PPP')
+                          ) : (
+                            <span>Pick a launch date</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={updates.weekly_target_launch_date ? new Date(updates.weekly_target_launch_date) : undefined}
+                          onSelect={(date) => {
+                            updateField('weekly_target_launch_date', date ? format(date, 'yyyy-MM-dd') : '');
+                          }}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
                 </div>
               </div>
 
@@ -197,6 +290,7 @@ export function BulkActions({
                   onClick={() => {
                     setIsOpen(false);
                     setUpdates({});
+                    setWeeklyTargetMode('no-change');
                   }}
                   disabled={loading}
                 >
