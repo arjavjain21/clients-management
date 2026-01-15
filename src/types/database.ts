@@ -111,6 +111,7 @@ export interface ClientFilters {
   assigned_account_manager_id?: string;
   assigned_inbox_manager_id?: string;
   assigned_sdr_id?: string;
+  weekly_target_type?: 'numeric' | 'launch' | 'none';
 }
 
 export interface ClientUpdateData {

@@ -46,6 +46,19 @@ function applyFilters(query: any, filters?: ClientFilters) {
     }
   }
   
+  if (filters.weekly_target_type) {
+    if (filters.weekly_target_type === 'numeric') {
+      // Has weekly_target but no launch date
+      query = query.not('weekly_target', 'is', null).is('weekly_target_launch_date', null);
+    } else if (filters.weekly_target_type === 'launch') {
+      // Has a launch date set
+      query = query.not('weekly_target_launch_date', 'is', null);
+    } else if (filters.weekly_target_type === 'none') {
+      // No weekly target set
+      query = query.is('weekly_target', null).is('weekly_target_launch_date', null);
+    }
+  }
+  
   return query;
 }
 
