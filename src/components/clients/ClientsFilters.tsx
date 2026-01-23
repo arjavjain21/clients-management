@@ -223,6 +223,17 @@ export function ClientsFilters({
             </SelectContent>
           </Select>
         </div>
+
+        {/* Additional Emails Search */}
+        <div className="space-y-2">
+          <Label htmlFor="additional_emails_search">Additional Email</Label>
+          <Input
+            id="additional_emails_search"
+            placeholder="Search secondary emails..."
+            value={filters.additional_emails_search || ''}
+            onChange={(e) => updateFilter('additional_emails_search', e.target.value || undefined)}
+          />
+        </div>
       </div>
     </Card>
   );

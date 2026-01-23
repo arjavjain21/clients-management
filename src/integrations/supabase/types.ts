@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       clients: {
         Row: {
+          additional_emails: string[] | null
           assigned_account_manager_email: string | null
           assigned_account_manager_id: string | null
           assigned_account_manager_name: string | null
@@ -52,6 +53,7 @@ export type Database = {
           weekly_target_launch_date: string | null
         }
         Insert: {
+          additional_emails?: string[] | null
           assigned_account_manager_email?: string | null
           assigned_account_manager_id?: string | null
           assigned_account_manager_name?: string | null
@@ -88,6 +90,7 @@ export type Database = {
           weekly_target_launch_date?: string | null
         }
         Update: {
+          additional_emails?: string[] | null
           assigned_account_manager_email?: string | null
           assigned_account_manager_id?: string | null
           assigned_account_manager_name?: string | null
