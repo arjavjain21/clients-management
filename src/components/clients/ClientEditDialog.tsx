@@ -26,6 +26,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, CalendarIcon } from 'lucide-react';
 import { RoundRobinAssignButton } from './RoundRobinAssignButton';
+import { AdditionalEmailsInput } from './AdditionalEmailsInput';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format, parse } from 'date-fns';
@@ -99,6 +100,7 @@ export function ClientEditDialog({
       setFormData({
         client_company_name: client.client_company_name || '',
         client_email: client.client_email || '',
+        additional_emails: (client as any).additional_emails || [],
         client_website: client.client_website || '',
         relationship_status: client.relationship_status || '',
         relationship_type: client.relationship_type || '',
@@ -121,10 +123,16 @@ export function ClientEditDialog({
       // Normalize values: empty strings -> null, booleans -> boolean, UUID empties -> null
       const textFields = new Set<string>(['weekly_target']);
       const dateFields = new Set<string>(['weekly_target_launch_date']);
+      const arrayFields = new Set<string>(['additional_emails']);
       const booleanFields = new Set(['onboarding_activated']);
       const uuidFields = new Set(['assigned_account_manager_id', 'assigned_inbox_manager_id', 'assigned_sdr_id']);
 
       const normalizeValue = (key: string, value: any) => {
+        if (arrayFields.has(key)) {
+          // For arrays, return empty array as null for consistency
+          if (!value || (Array.isArray(value) && value.length === 0)) return [];
+          return value;
+        }
         if (value === '') return null;
         if (uuidFields.has(key)) return value || null;
         if (textFields.has(key)) {
@@ -307,7 +315,7 @@ Operations`
           {/* Editable fields */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="client_email">Email</Label>
+              <Label htmlFor="client_email">Primary Email</Label>
               <Input
                 id="client_email"
                 type="email"
@@ -325,6 +333,16 @@ Operations`
                 placeholder="Company Inc."
               />
             </div>
+          </div>
+
+          {/* Additional Emails */}
+          <div>
+            <Label>Additional Emails</Label>
+            <p className="text-sm text-muted-foreground mb-2">Secondary emails for other team members</p>
+            <AdditionalEmailsInput
+              emails={formData.additional_emails || []}
+              onChange={(emails) => setFormData({ ...formData, additional_emails: emails })}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

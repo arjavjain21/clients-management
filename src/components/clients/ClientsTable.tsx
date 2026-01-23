@@ -226,14 +226,21 @@ export function ClientsTable({
                     </div>
                   </TableCell>
                   <TableCell>
-                    {client.client_email ? (
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-sm">{client.client_email}</span>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">No email</span>
-                    )}
+                    <div className="space-y-1">
+                      {client.client_email ? (
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-sm">{client.client_email}</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">No email</span>
+                      )}
+                      {client.additional_emails && client.additional_emails.length > 0 && (
+                        <div className="text-xs text-muted-foreground">
+                          +{client.additional_emails.length} more
+                        </div>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="max-w-32 truncate">

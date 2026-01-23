@@ -59,6 +59,11 @@ function applyFilters(query: any, filters?: ClientFilters) {
     }
   }
   
+  if (filters.additional_emails_search) {
+    // Search within the additional_emails array using contains
+    query = query.contains('additional_emails', [filters.additional_emails_search]);
+  }
+  
   return query;
 }
 

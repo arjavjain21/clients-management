@@ -3,6 +3,7 @@ export interface Client {
   client_id: number;
   client_name?: string;
   client_email?: string;
+  additional_emails?: string[] | null;
   client_company_name?: string;
   client_website?: string;
   relationship_status?: string;
@@ -112,6 +113,7 @@ export interface ClientFilters {
   assigned_inbox_manager_id?: string;
   assigned_sdr_id?: string;
   weekly_target_type?: 'numeric' | 'launch' | 'none';
+  additional_emails_search?: string;
 }
 
 export interface ClientUpdateData {
@@ -124,6 +126,7 @@ export interface ClientUpdateData {
   assigned_sdr_id?: string | null;
   weekly_target?: string | null;
   weekly_target_launch_date?: string | null;
+  additional_emails?: string[] | null;
 }
 
 export interface BulkUpdateData {
