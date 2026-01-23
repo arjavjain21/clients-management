@@ -224,15 +224,22 @@ export function ClientsFilters({
           </Select>
         </div>
 
-        {/* Additional Emails Search */}
+        {/* Has Additional Emails */}
         <div className="space-y-2">
-          <Label htmlFor="additional_emails_search">Additional Email</Label>
-          <Input
-            id="additional_emails_search"
-            placeholder="Search secondary emails..."
-            value={filters.additional_emails_search || ''}
-            onChange={(e) => updateFilter('additional_emails_search', e.target.value || undefined)}
-          />
+          <Label>Additional Emails</Label>
+          <Select
+            value={filters.has_additional_emails === undefined ? '' : filters.has_additional_emails ? 'yes' : 'no'}
+            onValueChange={(value) => updateFilter('has_additional_emails', value === 'all' ? undefined : value === 'yes')}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All clients" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All clients</SelectItem>
+              <SelectItem value="yes">Has additional emails</SelectItem>
+              <SelectItem value="no">No additional emails</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </Card>

@@ -113,7 +113,7 @@ export interface ClientFilters {
   assigned_inbox_manager_id?: string;
   assigned_sdr_id?: string;
   weekly_target_type?: 'numeric' | 'launch' | 'none';
-  additional_emails_search?: string;
+  has_additional_emails?: boolean;
 }
 
 export interface ClientUpdateData {

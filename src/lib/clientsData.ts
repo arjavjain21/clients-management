@@ -59,9 +59,14 @@ function applyFilters(query: any, filters?: ClientFilters) {
     }
   }
   
-  if (filters.additional_emails_search) {
-    // Search within the additional_emails array using contains
-    query = query.contains('additional_emails', [filters.additional_emails_search]);
+  if (filters.has_additional_emails !== undefined) {
+    if (filters.has_additional_emails) {
+      // Has at least one additional email - array is not empty
+      query = query.not('additional_emails', 'eq', '{}');
+    } else {
+      // No additional emails - array is empty or null
+      query = query.or('additional_emails.is.null,additional_emails.eq.{}');
+    }
   }
   
   return query;
