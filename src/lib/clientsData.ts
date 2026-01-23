@@ -59,13 +59,13 @@ function applyFilters(query: any, filters?: ClientFilters) {
     }
   }
   
-  if (filters.has_additional_emails !== undefined) {
-    if (filters.has_additional_emails) {
-      // Has at least one additional email - array is not empty
-      query = query.not('additional_emails', 'eq', '{}');
+  if (filters.has_correspondence_emails !== undefined) {
+    if (filters.has_correspondence_emails) {
+      // Has at least one correspondence email - array is not empty
+      query = query.not('correspondence_emails', 'eq', '{}');
     } else {
-      // No additional emails - array is empty or null
-      query = query.or('additional_emails.is.null,additional_emails.eq.{}');
+      // No correspondence emails - array is empty or null
+      query = query.or('correspondence_emails.is.null,correspondence_emails.eq.{}');
     }
   }
   

@@ -26,7 +26,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, CalendarIcon } from 'lucide-react';
 import { RoundRobinAssignButton } from './RoundRobinAssignButton';
-import { AdditionalEmailsInput } from './AdditionalEmailsInput';
+import { CorrespondenceEmailsInput } from './CorrespondenceEmailsInput';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format, parse } from 'date-fns';
@@ -100,7 +100,7 @@ export function ClientEditDialog({
       setFormData({
         client_company_name: client.client_company_name || '',
         client_email: client.client_email || '',
-        additional_emails: (client as any).additional_emails || [],
+        correspondence_emails: (client as any).correspondence_emails || [],
         client_website: client.client_website || '',
         relationship_status: client.relationship_status || '',
         relationship_type: client.relationship_type || '',
@@ -123,7 +123,7 @@ export function ClientEditDialog({
       // Normalize values: empty strings -> null, booleans -> boolean, UUID empties -> null
       const textFields = new Set<string>(['weekly_target']);
       const dateFields = new Set<string>(['weekly_target_launch_date']);
-      const arrayFields = new Set<string>(['additional_emails']);
+      const arrayFields = new Set<string>(['correspondence_emails']);
       const booleanFields = new Set(['onboarding_activated']);
       const uuidFields = new Set(['assigned_account_manager_id', 'assigned_inbox_manager_id', 'assigned_sdr_id']);
 
@@ -335,13 +335,13 @@ Operations`
             </div>
           </div>
 
-          {/* Additional Emails */}
+          {/* Correspondence Emails */}
           <div>
-            <Label>Additional Emails</Label>
-            <p className="text-sm text-muted-foreground mb-2">Secondary emails for other team members</p>
-            <AdditionalEmailsInput
-              emails={formData.additional_emails || []}
-              onChange={(emails) => setFormData({ ...formData, additional_emails: emails })}
+            <Label>Correspondence Emails</Label>
+            <p className="text-sm text-muted-foreground mb-2">Allowed emails for client communications</p>
+            <CorrespondenceEmailsInput
+              emails={formData.correspondence_emails || []}
+              onChange={(emails) => setFormData({ ...formData, correspondence_emails: emails })}
             />
           </div>
 
