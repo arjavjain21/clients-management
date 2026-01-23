@@ -33,7 +33,7 @@ export function AdditionalEmailsInput({ emails, onChange, disabled }: Additional
   };
 
   const isValidEmail = (email: string) => {
-    return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
   return (
