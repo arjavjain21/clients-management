@@ -4,13 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
-interface AdditionalEmailsInputProps {
+interface CorrespondenceEmailsInputProps {
   emails: string[];
   onChange: (emails: string[]) => void;
   disabled?: boolean;
 }
 
-export function AdditionalEmailsInput({ emails, onChange, disabled }: AdditionalEmailsInputProps) {
+export function CorrespondenceEmailsInput({ emails, onChange, disabled }: CorrespondenceEmailsInputProps) {
   const [newEmail, setNewEmail] = useState('');
 
   const addEmail = () => {
@@ -65,7 +65,7 @@ export function AdditionalEmailsInput({ emails, onChange, disabled }: Additional
         <div className="flex gap-2">
           <Input
             type="email"
-            placeholder="Add email address..."
+            placeholder="Add correspondence email..."
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -84,7 +84,7 @@ export function AdditionalEmailsInput({ emails, onChange, disabled }: Additional
       )}
       
       {emails.length === 0 && disabled && (
-        <span className="text-muted-foreground text-sm">No additional emails</span>
+        <span className="text-muted-foreground text-sm">No correspondence emails</span>
       )}
     </div>
   );

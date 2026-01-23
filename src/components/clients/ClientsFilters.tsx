@@ -224,20 +224,20 @@ export function ClientsFilters({
           </Select>
         </div>
 
-        {/* Has Additional Emails */}
+        {/* Has Correspondence Emails */}
         <div className="space-y-2">
-          <Label>Additional Emails</Label>
+          <Label>Correspondence Emails</Label>
           <Select
-            value={filters.has_additional_emails === undefined ? '' : filters.has_additional_emails ? 'yes' : 'no'}
-            onValueChange={(value) => updateFilter('has_additional_emails', value === 'all' ? undefined : value === 'yes')}
+            value={filters.has_correspondence_emails === undefined ? '' : filters.has_correspondence_emails ? 'yes' : 'no'}
+            onValueChange={(value) => updateFilter('has_correspondence_emails', value === 'all' ? undefined : value === 'yes')}
           >
             <SelectTrigger>
               <SelectValue placeholder="All clients" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All clients</SelectItem>
-              <SelectItem value="yes">Has additional emails</SelectItem>
-              <SelectItem value="no">No additional emails</SelectItem>
+              <SelectItem value="yes">Has correspondence emails</SelectItem>
+              <SelectItem value="no">No correspondence emails</SelectItem>
             </SelectContent>
           </Select>
         </div>
