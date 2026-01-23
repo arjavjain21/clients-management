@@ -69,15 +69,20 @@ function applyFilters(query: any, filters?: ClientFilters) {
 
 // Global totals: unaffected by UI filters
 export async function getGlobalTotals() {
+  // Total count - simple query
   const totalQuery = supabase
     .from('clients')
     .select('client_id', { count: 'exact', head: true });
   
+  // Active count: exit_date IS NULL AND relationship_status NOT IN inactive list (or is null)
+  // We need to handle: (exit_date IS NULL) AND (relationship_status IS NULL OR relationship_status NOT IN (...))
+  // Using PostgREST syntax properly
+  const inactiveStatusList = INACTIVE_STATUSES.map(s => `"${s}"`).join(',');
   const activeQuery = supabase
     .from('clients')
     .select('client_id', { count: 'exact', head: true })
     .is('exit_date', null)
-    .not('relationship_status', 'in', `(${INACTIVE_STATUSES.map(s => `"${s}"`).join(',')})`);
+    .or(`relationship_status.is.null,relationship_status.not.in.(${inactiveStatusList})`);
   
   const [totalResult, activeResult] = await Promise.all([
     totalQuery,
