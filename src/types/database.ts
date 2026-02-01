@@ -116,6 +116,7 @@ export interface ClientFilters {
   assigned_sdr_id?: string;
   weekly_target_type?: 'numeric' | 'launch' | 'none';
   has_correspondence_emails?: boolean;
+  correspondence_category?: 'feedback' | 'positives';
 }
 
 export interface ClientUpdateData {
