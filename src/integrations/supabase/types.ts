@@ -31,10 +31,12 @@ export type Database = {
           client_code: string
           client_company_name: string | null
           client_email: string | null
+          client_feedback_permalink_token: string | null
           client_id: number
           client_name: string | null
           client_website: string | null
           closelix: boolean | null
+          correspondence_categories: string[] | null
           correspondence_emails: string[] | null
           created_at: string
           exit_date: string | null
@@ -68,10 +70,12 @@ export type Database = {
           client_code: string
           client_company_name?: string | null
           client_email?: string | null
+          client_feedback_permalink_token?: string | null
           client_id: number
           client_name?: string | null
           client_website?: string | null
           closelix?: boolean | null
+          correspondence_categories?: string[] | null
           correspondence_emails?: string[] | null
           created_at?: string
           exit_date?: string | null
@@ -105,10 +109,12 @@ export type Database = {
           client_code?: string
           client_company_name?: string | null
           client_email?: string | null
+          client_feedback_permalink_token?: string | null
           client_id?: number
           client_name?: string | null
           client_website?: string | null
           closelix?: boolean | null
+          correspondence_categories?: string[] | null
           correspondence_emails?: string[] | null
           created_at?: string
           exit_date?: string | null

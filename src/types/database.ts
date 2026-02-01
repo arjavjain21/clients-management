@@ -3,7 +3,8 @@ export interface Client {
   client_id: number;
   client_name?: string;
   client_email?: string;
-  additional_emails?: string[] | null;
+  correspondence_emails?: string[] | null;
+  correspondence_categories?: string[] | null;
   client_company_name?: string;
   client_website?: string;
   relationship_status?: string;
@@ -27,6 +28,7 @@ export interface Client {
   updated_at: string;
   website_canonical?: string;
   weekend_sending_effective?: boolean;
+  closelix?: boolean;
 }
 
 export interface TeamMember {
@@ -126,7 +128,8 @@ export interface ClientUpdateData {
   assigned_sdr_id?: string | null;
   weekly_target?: string | null;
   weekly_target_launch_date?: string | null;
-  additional_emails?: string[] | null;
+  correspondence_emails?: string[] | null;
+  correspondence_categories?: string[] | null;
 }
 
 export interface BulkUpdateData {
