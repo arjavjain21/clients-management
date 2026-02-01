@@ -27,6 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, CalendarIcon } from 'lucide-react';
 import { RoundRobinAssignButton } from './RoundRobinAssignButton';
 import { CorrespondenceEmailsInput } from './CorrespondenceEmailsInput';
+import { CorrespondenceCategoriesInput } from './CorrespondenceCategoriesInput';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format, parse } from 'date-fns';
@@ -101,6 +102,7 @@ export function ClientEditDialog({
         client_company_name: client.client_company_name || '',
         client_email: client.client_email || '',
         correspondence_emails: (client as any).correspondence_emails || [],
+        correspondence_categories: (client as any).correspondence_categories || [],
         client_website: client.client_website || '',
         relationship_status: client.relationship_status || '',
         relationship_type: client.relationship_type || '',
@@ -123,7 +125,7 @@ export function ClientEditDialog({
       // Normalize values: empty strings -> null, booleans -> boolean, UUID empties -> null
       const textFields = new Set<string>(['weekly_target']);
       const dateFields = new Set<string>(['weekly_target_launch_date']);
-      const arrayFields = new Set<string>(['correspondence_emails']);
+      const arrayFields = new Set<string>(['correspondence_emails', 'correspondence_categories']);
       const booleanFields = new Set(['onboarding_activated']);
       const uuidFields = new Set(['assigned_account_manager_id', 'assigned_inbox_manager_id', 'assigned_sdr_id']);
 
@@ -342,6 +344,16 @@ Operations`
             <CorrespondenceEmailsInput
               emails={formData.correspondence_emails || []}
               onChange={(emails) => setFormData({ ...formData, correspondence_emails: emails })}
+            />
+          </div>
+
+          {/* Correspondence Categories */}
+          <div>
+            <Label>Correspondence Categories</Label>
+            <p className="text-sm text-muted-foreground mb-2">Types of correspondence for this client</p>
+            <CorrespondenceCategoriesInput
+              categories={formData.correspondence_categories || []}
+              onChange={(categories) => setFormData({ ...formData, correspondence_categories: categories })}
             />
           </div>
 

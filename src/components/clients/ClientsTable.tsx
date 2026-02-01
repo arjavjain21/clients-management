@@ -235,9 +235,9 @@ export function ClientsTable({
                       ) : (
                         <span className="text-muted-foreground text-sm">No email</span>
                       )}
-                      {client.additional_emails && client.additional_emails.length > 0 && (
+                      {(client as any).correspondence_emails && (client as any).correspondence_emails.length > 0 && (
                         <div className="text-xs text-muted-foreground">
-                          +{client.additional_emails.length} more
+                          +{(client as any).correspondence_emails.length} correspondence
                         </div>
                       )}
                     </div>
