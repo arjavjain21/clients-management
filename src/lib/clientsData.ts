@@ -69,6 +69,11 @@ function applyFilters(query: any, filters?: ClientFilters) {
     }
   }
   
+  if (filters.correspondence_category) {
+    // Filter clients that have this category in their correspondence_categories array
+    query = query.contains('correspondence_categories', [filters.correspondence_category]);
+  }
+  
   return query;
 }
 

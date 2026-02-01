@@ -241,6 +241,24 @@ export function ClientsFilters({
             </SelectContent>
           </Select>
         </div>
+
+        {/* Correspondence Category */}
+        <div className="space-y-2">
+          <Label>Correspondence Category</Label>
+          <Select
+            value={filters.correspondence_category || ''}
+            onValueChange={(value) => updateFilter('correspondence_category', value === 'all' ? undefined : value as 'feedback' | 'positives')}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All categories</SelectItem>
+              <SelectItem value="feedback">Feedback</SelectItem>
+              <SelectItem value="positives">Positives</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     </Card>
   );
