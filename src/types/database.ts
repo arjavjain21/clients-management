@@ -17,6 +17,7 @@ export interface Client {
   phone_number?: string;
   avg_dollar_gen_pm?: number;
   exit_date?: string;
+  bonus_pool_monthly?: number | null;
   assigned_account_manager_id?: string;
   assigned_inbox_manager_id?: string;
   assigned_sdr_id?: string;
@@ -131,6 +132,7 @@ export interface ClientUpdateData {
   weekly_target_launch_date?: string | null;
   correspondence_emails?: string[] | null;
   correspondence_categories?: string[] | null;
+  bonus_pool_monthly?: number | null;
 }
 
 export interface BulkUpdateData {

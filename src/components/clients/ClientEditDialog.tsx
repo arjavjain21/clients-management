@@ -114,6 +114,7 @@ export function ClientEditDialog({
         booking_link: client.booking_link || '',
         weekly_target: (client as any).weekly_target ?? '',
         weekly_target_launch_date: (client as any).weekly_target_launch_date || null,
+        bonus_pool_monthly: (client as any).bonus_pool_monthly ?? null,
       });
     }
   }, [client]);
@@ -128,6 +129,7 @@ export function ClientEditDialog({
       const arrayFields = new Set<string>(['correspondence_emails', 'correspondence_categories']);
       const booleanFields = new Set(['onboarding_activated']);
       const uuidFields = new Set(['assigned_account_manager_id', 'assigned_inbox_manager_id', 'assigned_sdr_id']);
+      const numericFields = new Set(['bonus_pool_monthly']);
 
       const normalizeValue = (key: string, value: any) => {
         if (arrayFields.has(key)) {
@@ -150,6 +152,11 @@ export function ClientEditDialog({
           if (value === 'true') return true;
           if (value === 'false') return false;
           return null;
+        }
+        if (numericFields.has(key)) {
+          if (value === '' || value === null || value === undefined) return null;
+          const num = parseFloat(value);
+          return isNaN(num) ? null : num;
         }
         return value;
       };
@@ -581,6 +588,19 @@ Operations`
                   </PopoverContent>
                 </Popover>
               )}
+            </div>
+            <div>
+              <Label htmlFor="bonus_pool_monthly">Bonus Pool (Monthly)</Label>
+              <Input
+                id="bonus_pool_monthly"
+                type="number"
+                value={formData.bonus_pool_monthly ?? ''}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  bonus_pool_monthly: e.target.value ? parseFloat(e.target.value) : null 
+                })}
+                placeholder="e.g. 80"
+              />
             </div>
           </div>
 
