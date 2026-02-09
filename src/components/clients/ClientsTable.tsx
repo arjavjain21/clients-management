@@ -198,6 +198,9 @@ export function ClientsTable({
                   <SortableHeader column="weekly_target">Weekly Target</SortableHeader>
                 </TableHead>
                 <TableHead>
+                  <SortableHeader column="bonus_pool_monthly">Bonus Pool</SortableHeader>
+                </TableHead>
+                <TableHead>
                   <SortableHeader column="updated_at">Last Updated</SortableHeader>
                 </TableHead>
                 <TableHead>Actions</TableHead>
@@ -358,6 +361,13 @@ export function ClientsTable({
                       
                       return <span className="text-muted-foreground text-sm">—</span>;
                     })()}
+                  </TableCell>
+                  <TableCell>
+                    {(client as any).bonus_pool_monthly != null ? (
+                      <span className="text-sm font-medium">${(client as any).bonus_pool_monthly.toLocaleString()}</span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="text-sm text-muted-foreground">

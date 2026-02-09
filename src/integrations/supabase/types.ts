@@ -27,6 +27,7 @@ export type Database = {
           assigned_sdr_id: string | null
           assigned_sdr_name: string | null
           avg_dollar_gen_pm: number | null
+          bonus_pool_monthly: number | null
           booking_link: string | null
           client_code: string
           client_company_name: string | null
@@ -66,6 +67,7 @@ export type Database = {
           assigned_sdr_id?: string | null
           assigned_sdr_name?: string | null
           avg_dollar_gen_pm?: number | null
+          bonus_pool_monthly?: number | null
           booking_link?: string | null
           client_code: string
           client_company_name?: string | null
@@ -105,6 +107,7 @@ export type Database = {
           assigned_sdr_id?: string | null
           assigned_sdr_name?: string | null
           avg_dollar_gen_pm?: number | null
+          bonus_pool_monthly?: number | null
           booking_link?: string | null
           client_code?: string
           client_company_name?: string | null
