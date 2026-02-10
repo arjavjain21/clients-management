@@ -41,6 +41,7 @@ export type Database = {
           correspondence_emails: string[] | null
           created_at: string
           exit_date: string | null
+          monthly_booking_goal: number | null
           onboarding_activated: boolean | null
           onboarding_date: string | null
           phone_number: string | null
@@ -81,6 +82,7 @@ export type Database = {
           correspondence_emails?: string[] | null
           created_at?: string
           exit_date?: string | null
+          monthly_booking_goal?: number | null
           onboarding_activated?: boolean | null
           onboarding_date?: string | null
           phone_number?: string | null
@@ -121,6 +123,7 @@ export type Database = {
           correspondence_emails?: string[] | null
           created_at?: string
           exit_date?: string | null
+          monthly_booking_goal?: number | null
           onboarding_activated?: boolean | null
           onboarding_date?: string | null
           phone_number?: string | null
