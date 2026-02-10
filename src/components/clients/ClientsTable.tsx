@@ -198,6 +198,9 @@ export function ClientsTable({
                   <SortableHeader column="weekly_target">Weekly Target</SortableHeader>
                 </TableHead>
                 <TableHead>
+                  <SortableHeader column="monthly_booking_goal">Monthly Goal</SortableHeader>
+                </TableHead>
+                <TableHead>
                   <SortableHeader column="bonus_pool_monthly">Bonus Pool</SortableHeader>
                 </TableHead>
                 <TableHead>
@@ -361,6 +364,15 @@ export function ClientsTable({
                       
                       return <span className="text-muted-foreground text-sm">—</span>;
                     })()}
+                  </TableCell>
+                  <TableCell>
+                    {(client as any).closelix ? (
+                      <Badge variant="secondary" className="text-xs">Closelix</Badge>
+                    ) : (client as any).monthly_booking_goal != null ? (
+                      <span className="text-sm font-medium">{(client as any).monthly_booking_goal}</span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     {(client as any).bonus_pool_monthly != null ? (

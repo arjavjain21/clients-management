@@ -30,6 +30,7 @@ export interface Client {
   website_canonical?: string;
   weekend_sending_effective?: boolean;
   closelix?: boolean;
+  monthly_booking_goal?: number | null;
 }
 
 export interface TeamMember {
@@ -133,6 +134,8 @@ export interface ClientUpdateData {
   correspondence_emails?: string[] | null;
   correspondence_categories?: string[] | null;
   bonus_pool_monthly?: number | null;
+  monthly_booking_goal?: number | null;
+  closelix?: boolean | null;
 }
 
 export interface BulkUpdateData {

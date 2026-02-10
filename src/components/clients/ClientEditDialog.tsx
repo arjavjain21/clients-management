@@ -92,11 +92,13 @@ export function ClientEditDialog({
 
   // Determine if the weekly target is a launch date based on weekly_target_launch_date
   const [weeklyTargetMode, setWeeklyTargetMode] = useState<'target' | 'launch'>('target');
+  const [monthlyGoalMode, setMonthlyGoalMode] = useState<'numeric' | 'closelix'>('numeric');
 
   useEffect(() => {
     if (client) {
       const hasLaunchDate = !!(client as any).weekly_target_launch_date;
       setWeeklyTargetMode(hasLaunchDate ? 'launch' : 'target');
+      setMonthlyGoalMode((client as any).closelix ? 'closelix' : 'numeric');
       
       setFormData({
         client_company_name: client.client_company_name || '',
@@ -115,6 +117,8 @@ export function ClientEditDialog({
         weekly_target: (client as any).weekly_target ?? '',
         weekly_target_launch_date: (client as any).weekly_target_launch_date || null,
         bonus_pool_monthly: (client as any).bonus_pool_monthly ?? null,
+        monthly_booking_goal: (client as any).monthly_booking_goal ?? null,
+        closelix: (client as any).closelix ?? false,
       });
     }
   }, [client]);
@@ -129,7 +133,8 @@ export function ClientEditDialog({
       const arrayFields = new Set<string>(['correspondence_emails', 'correspondence_categories']);
       const booleanFields = new Set(['onboarding_activated']);
       const uuidFields = new Set(['assigned_account_manager_id', 'assigned_inbox_manager_id', 'assigned_sdr_id']);
-      const numericFields = new Set(['bonus_pool_monthly']);
+      const numericFields = new Set(['bonus_pool_monthly', 'monthly_booking_goal']);
+      const boolFields2 = new Set(['closelix']);
 
       const normalizeValue = (key: string, value: any) => {
         if (arrayFields.has(key)) {
@@ -158,6 +163,9 @@ export function ClientEditDialog({
           const num = parseFloat(value);
           return isNaN(num) ? null : num;
         }
+        if (boolFields2.has(key)) {
+          return !!value;
+        }
         return value;
       };
 
@@ -178,11 +186,23 @@ export function ClientEditDialog({
         }
       }
       
+      // Handle monthly goal based on mode
+      let monthlyGoalValue = formData.monthly_booking_goal;
+      let closelixValue = formData.closelix;
+      if (monthlyGoalMode === 'closelix') {
+        monthlyGoalValue = null;
+        closelixValue = true;
+      } else {
+        closelixValue = false;
+      }
+
       // Update formData with computed values for patching
       const patchFormData = {
         ...formData,
         weekly_target: weeklyTargetValue,
         weekly_target_launch_date: weeklyTargetLaunchDate,
+        monthly_booking_goal: monthlyGoalValue,
+        closelix: closelixValue,
       };
 
       // Build normalized current and initial, then compute minimal patch
@@ -602,6 +622,50 @@ Operations`
                 placeholder="e.g. 80"
               />
             </div>
+          </div>
+
+          {/* Monthly Booking Goal */}
+          <div className="space-y-3">
+            <Label>Monthly Booking Goal</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={monthlyGoalMode === 'numeric' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setMonthlyGoalMode('numeric');
+                  setFormData({ ...formData, closelix: false });
+                }}
+              >
+                Numeric Target
+              </Button>
+              <Button
+                type="button"
+                variant={monthlyGoalMode === 'closelix' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setMonthlyGoalMode('closelix');
+                  setFormData({ ...formData, monthly_booking_goal: null, closelix: true });
+                }}
+              >
+                Closelix
+              </Button>
+            </div>
+            {monthlyGoalMode === 'numeric' ? (
+              <Input
+                type="number"
+                value={formData.monthly_booking_goal ?? ''}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  monthly_booking_goal: e.target.value ? parseFloat(e.target.value) : null,
+                })}
+                placeholder="e.g. 15"
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                $25 bonus if client renews and we receive no complaints on bad leads, disconnected senders, or errors with campaigns.
+              </p>
+            )}
           </div>
 
         </div>
