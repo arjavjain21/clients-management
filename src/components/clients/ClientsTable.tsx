@@ -157,14 +157,14 @@ export function ClientsTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12">
+                <TableHead className="w-12 sticky left-0 z-20 bg-background">
                   <Checkbox
                     checked={selectedClients.length === clients.length}
                     onCheckedChange={toggleSelectAll}
                     aria-label="Select all clients"
                   />
                 </TableHead>
-                <TableHead>
+                <TableHead className="sticky left-12 z-20 bg-background">
                   <SortableHeader column="client_code">Code</SortableHeader>
                 </TableHead>
                 <TableHead>
@@ -216,14 +216,14 @@ export function ClientsTable({
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => onRowClick?.(client)}
                 >
-                  <TableCell onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="sticky left-0 z-10 bg-background" onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={isSelected(client)}
                       onCheckedChange={() => toggleSelection(client)}
                       aria-label={`Select ${client.client_name || client.client_code}`}
                     />
                   </TableCell>
-                  <TableCell className="font-mono text-sm">
+                  <TableCell className="font-mono text-sm sticky left-12 z-10 bg-background">
                     {client.client_code}-{client.client_id}
                   </TableCell>
                   <TableCell>
