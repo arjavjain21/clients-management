@@ -1,0 +1,1 @@
+ALTER TABLE public.clients ADD COLUMN notes text DEFAULT NULL;

@@ -20,17 +20,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { Loader2, CalendarIcon } from 'lucide-react';
 import { RoundRobinAssignButton } from './RoundRobinAssignButton';
 import { CorrespondenceEmailsInput } from './CorrespondenceEmailsInput';
 import { CorrespondenceCategoriesInput } from './CorrespondenceCategoriesInput';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format, parse } from 'date-fns';
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface ClientEditDialogProps {
@@ -90,7 +92,6 @@ export function ClientEditDialog({
     enabled: open,
   });
 
-  // Determine if the weekly target is a launch date based on weekly_target_launch_date
   const [weeklyTargetMode, setWeeklyTargetMode] = useState<'target' | 'launch'>('target');
   const [monthlyGoalMode, setMonthlyGoalMode] = useState<'numeric' | 'closelix'>('numeric');
 
@@ -119,6 +120,7 @@ export function ClientEditDialog({
         bonus_pool_monthly: (client as any).bonus_pool_monthly ?? null,
         monthly_booking_goal: (client as any).monthly_booking_goal ?? null,
         closelix: (client as any).closelix ?? false,
+        notes: (client as any).notes ?? '',
       });
     }
   }, [client]);
@@ -127,8 +129,7 @@ export function ClientEditDialog({
     if (!client) return;
     setSaving(true);
     try {
-      // Normalize values: empty strings -> null, booleans -> boolean, UUID empties -> null
-      const textFields = new Set<string>(['weekly_target']);
+      const textFields = new Set<string>(['weekly_target', 'notes']);
       const dateFields = new Set<string>(['weekly_target_launch_date']);
       const arrayFields = new Set<string>(['correspondence_emails', 'correspondence_categories']);
       const booleanFields = new Set(['onboarding_activated']);
@@ -138,18 +139,15 @@ export function ClientEditDialog({
 
       const normalizeValue = (key: string, value: any) => {
         if (arrayFields.has(key)) {
-          // For arrays, return empty array as null for consistency
           if (!value || (Array.isArray(value) && value.length === 0)) return [];
           return value;
         }
         if (value === '') return null;
         if (uuidFields.has(key)) return value || null;
         if (textFields.has(key)) {
-          // For weekly_target, store as string
           return value ? String(value) : null;
         }
         if (dateFields.has(key)) {
-          // For dates, ensure proper format or null
           return value || null;
         }
         if (booleanFields.has(key)) {
@@ -169,15 +167,12 @@ export function ClientEditDialog({
         return value;
       };
 
-      // Handle weekly target based on mode
       let weeklyTargetValue = formData.weekly_target;
       let weeklyTargetLaunchDate = formData.weekly_target_launch_date;
       
       if (weeklyTargetMode === 'target') {
-        // Clear launch date if in target mode
         weeklyTargetLaunchDate = null;
       } else {
-        // In launch mode, format the display text and set the date
         if (weeklyTargetLaunchDate) {
           const launchDate = new Date(weeklyTargetLaunchDate);
           weeklyTargetValue = `Launch ${format(launchDate, 'do MMM')}`;
@@ -186,7 +181,6 @@ export function ClientEditDialog({
         }
       }
       
-      // Handle monthly goal based on mode
       let monthlyGoalValue = formData.monthly_booking_goal;
       let closelixValue = formData.closelix;
       if (monthlyGoalMode === 'closelix') {
@@ -196,7 +190,6 @@ export function ClientEditDialog({
         closelixValue = false;
       }
 
-      // Update formData with computed values for patching
       const patchFormData = {
         ...formData,
         weekly_target: weeklyTargetValue,
@@ -205,7 +198,6 @@ export function ClientEditDialog({
         closelix: closelixValue,
       };
 
-      // Build normalized current and initial, then compute minimal patch
       const keys = Object.keys(patchFormData);
       const normalizedCurrent: Record<string, any> = {};
       const normalizedInitial: Record<string, any> = {};
@@ -228,7 +220,6 @@ export function ClientEditDialog({
         return;
       }
       
-      // Update via Supabase client directly
       const { error } = await supabase
         .from("clients")
         .update(patch)
@@ -258,7 +249,6 @@ export function ClientEditDialog({
         if (im) toNotify.push({ email: im.email, full_name: im.full_name });
       }
 
-      // Only send SDR email if it's an actual SDR assignment (not "No SDR" sentinel)
       const NO_SDR_SENTINEL = '00000000-0000-0000-0000-000000000000';
       if (
         patch.assigned_sdr_id &&
@@ -269,32 +259,18 @@ export function ClientEditDialog({
         if (sdr) toNotify.push({ email: sdr.email, full_name: sdr.full_name });
       }
       
-      // Send notification emails
       for (const tm of toNotify) {
         try {
           await sendAssignmentEmail({
             to: tm.email,
             subject: `Client assigned: ${client.client_name ?? client.client_code}`,
-            text: `Hi ${tm.full_name},
-
-You have been assigned to a client.
-
-Client Name: ${client.client_name ?? "-"}
-Client Code: ${client.client_code}
-Client ID: ${client.client_id}
-Company: ${formData.client_company_name ?? "-"}
-Relationship: ${formData.relationship_status ?? "-"} (${formData.relationship_type ?? "-"})
-Weekend Sending: ${formData.weekend_sending_mode ?? "-"}
-
-Regards,
-Operations`
+            text: `Hi ${tm.full_name},\n\nYou have been assigned to a client.\n\nClient Name: ${client.client_name ?? "-"}\nClient Code: ${client.client_code}\nClient ID: ${client.client_id}\nCompany: ${formData.client_company_name ?? "-"}\nRelationship: ${formData.relationship_status ?? "-"} (${formData.relationship_type ?? "-"})\nWeekend Sending: ${formData.weekend_sending_mode ?? "-"}\n\nRegards,\nOperations`
           });
         } catch (emailError) {
           console.warn('Failed to send assignment email:', emailError);
         }
       }
 
-      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['metrics','global'] });
       queryClient.invalidateQueries({ queryKey: ['metrics','filtered'] });
@@ -318,149 +294,83 @@ Operations`
 
   if (!client) return null;
 
+  const NOTES_SOFT_LIMIT = 5000;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Client</DialogTitle>
+          <DialogTitle>
+            Edit Client — {client.client_code}-{client.client_id}
+          </DialogTitle>
           <DialogDescription>
-            Update client information and settings. Read-only fields are marked with badges.
+            {client.client_name || 'Unnamed client'}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6 py-4">
-          {/* Read-only fields */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Client Code <Badge variant="secondary" className="ml-2">Read-only</Badge></Label>
-              <Input value={`${client.client_code}-${client.client_id}`} disabled />
-            </div>
-            <div>
-              <Label>Client Name <Badge variant="secondary" className="ml-2">Read-only</Badge></Label>
-              <Input value={client.client_name || 'No name'} disabled />
-            </div>
-          </div>
+        <Tabs defaultValue="general" className="w-full">
+          <TabsList className="w-full grid grid-cols-6">
+            <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="relationship">Relationship</TabsTrigger>
+            <TabsTrigger value="assignments">Assignments</TabsTrigger>
+            <TabsTrigger value="targets">Targets</TabsTrigger>
+            <TabsTrigger value="comms">Comms</TabsTrigger>
+            <TabsTrigger value="notes">Notes</TabsTrigger>
+          </TabsList>
 
-          {/* Editable fields */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="client_email">Primary Email</Label>
-              <Input
-                id="client_email"
-                type="email"
-                value={formData.client_email}
-                onChange={(e) => setFormData({ ...formData, client_email: e.target.value })}
-                placeholder="client@company.com"
-              />
+          {/* General Tab */}
+          <TabsContent value="general" className="space-y-4 pt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Client Code <Badge variant="secondary" className="ml-1 text-xs">Read-only</Badge></Label>
+                <Input value={`${client.client_code}-${client.client_id}`} disabled />
+              </div>
+              <div>
+                <Label>Client Name <Badge variant="secondary" className="ml-1 text-xs">Read-only</Badge></Label>
+                <Input value={client.client_name || 'No name'} disabled />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="client_company_name">Company Name</Label>
-              <Input
-                id="client_company_name"
-                value={formData.client_company_name}
-                onChange={(e) => setFormData({ ...formData, client_company_name: e.target.value })}
-                placeholder="Company Inc."
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="client_email">Primary Email</Label>
+                <Input
+                  id="client_email"
+                  type="email"
+                  value={formData.client_email}
+                  onChange={(e) => setFormData({ ...formData, client_email: e.target.value })}
+                  placeholder="client@company.com"
+                />
+              </div>
+              <div>
+                <Label htmlFor="client_company_name">Company Name</Label>
+                <Input
+                  id="client_company_name"
+                  value={formData.client_company_name}
+                  onChange={(e) => setFormData({ ...formData, client_company_name: e.target.value })}
+                  placeholder="Company Inc."
+                />
+              </div>
             </div>
-          </div>
-
-          {/* Correspondence Emails */}
-          <div>
-            <Label>Correspondence Emails</Label>
-            <p className="text-sm text-muted-foreground mb-2">Allowed emails for client communications</p>
-            <CorrespondenceEmailsInput
-              emails={formData.correspondence_emails || []}
-              onChange={(emails) => setFormData({ ...formData, correspondence_emails: emails })}
-            />
-          </div>
-
-          {/* Correspondence Categories */}
-          <div>
-            <Label>Correspondence Categories</Label>
-            <p className="text-sm text-muted-foreground mb-2">Types of correspondence for this client</p>
-            <CorrespondenceCategoriesInput
-              categories={formData.correspondence_categories || []}
-              onChange={(categories) => setFormData({ ...formData, correspondence_categories: categories })}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="client_website">Website</Label>
-              <Input
-                id="client_website"
-                type="url"
-                value={formData.client_website}
-                onChange={(e) => setFormData({ ...formData, client_website: e.target.value })}
-                placeholder="https://company.com"
-              />
-            </div>
-            <div>
-              <Label htmlFor="phone_number">Phone</Label>
-              <Input
-                id="phone_number"
-                value={formData.phone_number}
-                onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                placeholder="+1 555 123-4567"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="relationship_status">Relationship Status</Label>
-              <Select
-                value={formData.relationship_status}
-                onValueChange={(value) => setFormData({ ...formData, relationship_status: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {relationshipStatuses.map((status) => (
-                    <SelectItem key={status.name} value={status.name}>
-                      {status.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="relationship_type">Relationship Type</Label>
-              <Select
-                value={formData.relationship_type}
-                onValueChange={(value) => setFormData({ ...formData, relationship_type: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {relationshipTypes.map((type) => (
-                    <SelectItem key={type.name} value={type.name}>
-                      {type.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="weekend_sending_mode">Weekend Sending</Label>
-              <Select
-                value={formData.weekend_sending_mode}
-                onValueChange={(value) => setFormData({ ...formData, weekend_sending_mode: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="inherit">Inherit</SelectItem>
-                  <SelectItem value="true">Enabled</SelectItem>
-                  <SelectItem value="false">Disabled</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="client_website">Website</Label>
+                <Input
+                  id="client_website"
+                  type="url"
+                  value={formData.client_website}
+                  onChange={(e) => setFormData({ ...formData, client_website: e.target.value })}
+                  placeholder="https://company.com"
+                />
+              </div>
+              <div>
+                <Label htmlFor="phone_number">Phone</Label>
+                <Input
+                  id="phone_number"
+                  value={formData.phone_number}
+                  onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                  placeholder="+1 555 123-4567"
+                />
+              </div>
             </div>
             <div>
               <Label htmlFor="booking_link">Booking Link</Label>
@@ -472,51 +382,109 @@ Operations`
                 placeholder="https://calendly.com/..."
               />
             </div>
-          </div>
+          </TabsContent>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Relationship Tab */}
+          <TabsContent value="relationship" className="space-y-4 pt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="relationship_status">Status</Label>
+                <Select
+                  value={formData.relationship_status}
+                  onValueChange={(value) => setFormData({ ...formData, relationship_status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {relationshipStatuses.map((status) => (
+                      <SelectItem key={status.name} value={status.name}>
+                        {status.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="relationship_type">Type</Label>
+                <Select
+                  value={formData.relationship_type}
+                  onValueChange={(value) => setFormData({ ...formData, relationship_type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {relationshipTypes.map((type) => (
+                      <SelectItem key={type.name} value={type.name}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div>
-              <Label htmlFor="assigned_account_manager_id">Account Manager</Label>
+              <Label htmlFor="weekend_sending_mode">Weekend Sending</Label>
               <Select
-                value={formData.assigned_account_manager_id}
-                onValueChange={(value) => setFormData({ ...formData, assigned_account_manager_id: value === 'unassigned' ? null : value })}
+                value={formData.weekend_sending_mode}
+                onValueChange={(value) => setFormData({ ...formData, weekend_sending_mode: value })}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select account manager" />
+                <SelectTrigger className="w-full max-w-xs">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {accountManagers.map((member) => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {member.full_name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="inherit">Inherit</SelectItem>
+                  <SelectItem value="true">Enabled</SelectItem>
+                  <SelectItem value="false">Disabled</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label htmlFor="assigned_inbox_manager_id">Inbox Manager</Label>
-              <Select
-                value={formData.assigned_inbox_manager_id}
-                onValueChange={(value) => setFormData({ ...formData, assigned_inbox_manager_id: value === 'unassigned' ? null : value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select inbox manager" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {inboxManagers.map((member) => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {member.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          </TabsContent>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+          {/* Assignments Tab */}
+          <TabsContent value="assignments" className="space-y-4 pt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="assigned_account_manager_id">Account Manager</Label>
+                <Select
+                  value={formData.assigned_account_manager_id}
+                  onValueChange={(value) => setFormData({ ...formData, assigned_account_manager_id: value === 'unassigned' ? null : value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select account manager" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {accountManagers.map((member) => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="assigned_inbox_manager_id">Inbox Manager</Label>
+                <Select
+                  value={formData.assigned_inbox_manager_id}
+                  onValueChange={(value) => setFormData({ ...formData, assigned_inbox_manager_id: value === 'unassigned' ? null : value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select inbox manager" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {inboxManagers.map((member) => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="max-w-xs">
               <Label htmlFor="assigned_sdr_id">SDR</Label>
               <Select
                 value={formData.assigned_sdr_id || 'unassigned'}
@@ -539,6 +507,20 @@ Operations`
                 </SelectContent>
               </Select>
             </div>
+            <div className="pt-2">
+              <RoundRobinAssignButton 
+                client={client} 
+                onAssignmentComplete={() => {
+                  queryClient.invalidateQueries({ queryKey: ['clients'] });
+                  queryClient.invalidateQueries({ queryKey: ['metrics'] });
+                  onOpenChange(false);
+                }}
+              />
+            </div>
+          </TabsContent>
+
+          {/* Targets & Financials Tab */}
+          <TabsContent value="targets" className="space-y-6 pt-4">
             <div className="space-y-3">
               <Label>Weekly Target</Label>
               <div className="flex gap-2">
@@ -565,7 +547,6 @@ Operations`
                   Future Launch
                 </Button>
               </div>
-              
               {weeklyTargetMode === 'target' ? (
                 <Input
                   id="weekly_target"
@@ -573,6 +554,7 @@ Operations`
                   value={formData.weekly_target || ''}
                   onChange={(e) => setFormData({ ...formData, weekly_target: e.target.value })}
                   placeholder="e.g. 2500"
+                  className="max-w-xs"
                 />
               ) : (
                 <Popover>
@@ -580,7 +562,7 @@ Operations`
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal",
+                        "max-w-xs w-full justify-start text-left font-normal",
                         !formData.weekly_target_launch_date && "text-muted-foreground"
                       )}
                     >
@@ -609,7 +591,52 @@ Operations`
                 </Popover>
               )}
             </div>
-            <div>
+
+            <div className="space-y-3">
+              <Label>Monthly Booking Goal</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={monthlyGoalMode === 'numeric' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setMonthlyGoalMode('numeric');
+                    setFormData({ ...formData, closelix: false });
+                  }}
+                >
+                  Numeric Target
+                </Button>
+                <Button
+                  type="button"
+                  variant={monthlyGoalMode === 'closelix' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setMonthlyGoalMode('closelix');
+                    setFormData({ ...formData, monthly_booking_goal: null, closelix: true });
+                  }}
+                >
+                  Closelix
+                </Button>
+              </div>
+              {monthlyGoalMode === 'numeric' ? (
+                <Input
+                  type="number"
+                  value={formData.monthly_booking_goal ?? ''}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    monthly_booking_goal: e.target.value ? parseFloat(e.target.value) : null,
+                  })}
+                  placeholder="e.g. 15"
+                  className="max-w-xs"
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  $25 bonus if client renews and we receive no complaints on bad leads, disconnected senders, or errors with campaigns.
+                </p>
+              )}
+            </div>
+
+            <div className="max-w-xs">
               <Label htmlFor="bonus_pool_monthly">Bonus Pool (Monthly)</Label>
               <Input
                 id="bonus_pool_monthly"
@@ -622,67 +649,46 @@ Operations`
                 placeholder="e.g. 80"
               />
             </div>
-          </div>
+          </TabsContent>
 
-          {/* Monthly Booking Goal */}
-          <div className="space-y-3">
-            <Label>Monthly Booking Goal</Label>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant={monthlyGoalMode === 'numeric' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  setMonthlyGoalMode('numeric');
-                  setFormData({ ...formData, closelix: false });
-                }}
-              >
-                Numeric Target
-              </Button>
-              <Button
-                type="button"
-                variant={monthlyGoalMode === 'closelix' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  setMonthlyGoalMode('closelix');
-                  setFormData({ ...formData, monthly_booking_goal: null, closelix: true });
-                }}
-              >
-                Closelix
-              </Button>
-            </div>
-            {monthlyGoalMode === 'numeric' ? (
-              <Input
-                type="number"
-                value={formData.monthly_booking_goal ?? ''}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  monthly_booking_goal: e.target.value ? parseFloat(e.target.value) : null,
-                })}
-                placeholder="e.g. 15"
+          {/* Communications Tab */}
+          <TabsContent value="comms" className="space-y-6 pt-4">
+            <div>
+              <Label>Correspondence Emails</Label>
+              <p className="text-sm text-muted-foreground mb-2">Allowed emails for client communications</p>
+              <CorrespondenceEmailsInput
+                emails={formData.correspondence_emails || []}
+                onChange={(emails) => setFormData({ ...formData, correspondence_emails: emails })}
               />
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                $25 bonus if client renews and we receive no complaints on bad leads, disconnected senders, or errors with campaigns.
-              </p>
-            )}
-          </div>
+            </div>
+            <div>
+              <Label>Correspondence Categories</Label>
+              <p className="text-sm text-muted-foreground mb-2">Types of correspondence for this client</p>
+              <CorrespondenceCategoriesInput
+                categories={formData.correspondence_categories || []}
+                onChange={(categories) => setFormData({ ...formData, correspondence_categories: categories })}
+              />
+            </div>
+          </TabsContent>
 
-        </div>
+          {/* Notes Tab */}
+          <TabsContent value="notes" className="space-y-2 pt-4">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              value={formData.notes || ''}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              placeholder="Add notes about this client..."
+              rows={6}
+              className="resize-y"
+            />
+            <p className="text-xs text-muted-foreground text-right">
+              {(formData.notes || '').length.toLocaleString()} / {NOTES_SOFT_LIMIT.toLocaleString()}
+            </p>
+          </TabsContent>
+        </Tabs>
 
-        <DialogFooter className="flex justify-between">
-          <RoundRobinAssignButton 
-            client={client} 
-            onAssignmentComplete={() => {
-              // Refresh the clients queries to get updated data
-              queryClient.invalidateQueries({ queryKey: ['clients'] });
-              queryClient.invalidateQueries({ queryKey: ['metrics'] });
-              
-              // Update form data with latest client info after assignment
-              // Note: The queries will refresh the parent component and close/reopen this dialog with fresh data
-              onOpenChange(false);
-            }}
-          />
+        <DialogFooter className="flex justify-between pt-4">
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
