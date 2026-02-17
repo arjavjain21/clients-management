@@ -309,9 +309,8 @@ export function ClientEditDialog({
         </DialogHeader>
 
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="w-full grid grid-cols-6">
+          <TabsList className="w-full grid grid-cols-5">
             <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="relationship">Relationship</TabsTrigger>
             <TabsTrigger value="assignments">Assignments</TabsTrigger>
             <TabsTrigger value="targets">Targets</TabsTrigger>
             <TabsTrigger value="comms">Comms</TabsTrigger>
@@ -320,6 +319,7 @@ export function ClientEditDialog({
 
           {/* General Tab */}
           <TabsContent value="general" className="space-y-4 pt-4">
+            <h3 className="text-sm font-semibold text-foreground">General</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Client Code <Badge variant="secondary" className="ml-1 text-xs">Read-only</Badge></Label>
@@ -382,63 +382,64 @@ export function ClientEditDialog({
                 placeholder="https://calendly.com/..."
               />
             </div>
-          </TabsContent>
 
-          {/* Relationship Tab */}
-          <TabsContent value="relationship" className="space-y-4 pt-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="relationship_status">Status</Label>
-                <Select
-                  value={formData.relationship_status}
-                  onValueChange={(value) => setFormData({ ...formData, relationship_status: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {relationshipStatuses.map((status) => (
-                      <SelectItem key={status.name} value={status.name}>
-                        {status.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* Relationship Section */}
+            <div className="pt-4 border-t">
+              <h3 className="text-sm font-semibold text-foreground mb-3">Relationship</h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="relationship_status">Status</Label>
+                  <Select
+                    value={formData.relationship_status}
+                    onValueChange={(value) => setFormData({ ...formData, relationship_status: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {relationshipStatuses.map((status) => (
+                        <SelectItem key={status.name} value={status.name}>
+                          {status.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="relationship_type">Type</Label>
+                  <Select
+                    value={formData.relationship_type}
+                    onValueChange={(value) => setFormData({ ...formData, relationship_type: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {relationshipTypes.map((type) => (
+                        <SelectItem key={type.name} value={type.name}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="weekend_sending_mode">Weekend Sending</Label>
+                  <Select
+                    value={formData.weekend_sending_mode}
+                    onValueChange={(value) => setFormData({ ...formData, weekend_sending_mode: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="inherit">Inherit</SelectItem>
+                      <SelectItem value="true">Enabled</SelectItem>
+                      <SelectItem value="false">Disabled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="relationship_type">Type</Label>
-                <Select
-                  value={formData.relationship_type}
-                  onValueChange={(value) => setFormData({ ...formData, relationship_type: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {relationshipTypes.map((type) => (
-                      <SelectItem key={type.name} value={type.name}>
-                        {type.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="weekend_sending_mode">Weekend Sending</Label>
-              <Select
-                value={formData.weekend_sending_mode}
-                onValueChange={(value) => setFormData({ ...formData, weekend_sending_mode: value })}
-              >
-                <SelectTrigger className="w-full max-w-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="inherit">Inherit</SelectItem>
-                  <SelectItem value="true">Enabled</SelectItem>
-                  <SelectItem value="false">Disabled</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </TabsContent>
 
