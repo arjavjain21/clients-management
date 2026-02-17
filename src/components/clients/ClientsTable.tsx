@@ -157,14 +157,14 @@ export function ClientsTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12 sticky left-0 z-20 bg-background">
+                <TableHead className="w-[48px] min-w-[48px] max-w-[48px] sticky left-0 z-20 bg-background">
                   <Checkbox
                     checked={selectedClients.length === clients.length}
                     onCheckedChange={toggleSelectAll}
                     aria-label="Select all clients"
                   />
                 </TableHead>
-                <TableHead className="sticky left-12 z-20 bg-background">
+                <TableHead className="sticky left-[48px] z-20 bg-background shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                   <SortableHeader column="client_code">Code</SortableHeader>
                 </TableHead>
                 <TableHead>
@@ -216,14 +216,14 @@ export function ClientsTable({
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => onRowClick?.(client)}
                 >
-                  <TableCell className="sticky left-0 z-10 bg-background" onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="w-[48px] min-w-[48px] max-w-[48px] sticky left-0 z-10 bg-background" onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={isSelected(client)}
                       onCheckedChange={() => toggleSelection(client)}
                       aria-label={`Select ${client.client_name || client.client_code}`}
                     />
                   </TableCell>
-                  <TableCell className="font-mono text-sm sticky left-12 z-10 bg-background">
+                  <TableCell className="font-mono text-sm sticky left-[48px] z-10 bg-background shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                     {client.client_code}-{client.client_id}
                   </TableCell>
                   <TableCell>
