@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_booking_goals_monthly: {
+        Row: {
+          bonus_pool_monthly: number | null
+          changed_by: string | null
+          client_code: string
+          created_at: string
+          id: string
+          monthly_booking_goal: number | null
+          period_key: string
+          source: string | null
+          updated_at: string
+        }
+        Insert: {
+          bonus_pool_monthly?: number | null
+          changed_by?: string | null
+          client_code: string
+          created_at?: string
+          id?: string
+          monthly_booking_goal?: number | null
+          period_key: string
+          source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bonus_pool_monthly?: number | null
+          changed_by?: string | null
+          client_code?: string
+          created_at?: string
+          id?: string
+          monthly_booking_goal?: number | null
+          period_key?: string
+          source?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           assigned_account_manager_email: string | null
@@ -541,6 +577,29 @@ export type Database = {
       }
     }
     Views: {
+      client_booking_goals_effective_for_period: {
+        Row: {
+          bonus_pool_monthly: number | null
+          client_code: string | null
+          goal_set_at: string | null
+          monthly_booking_goal: number | null
+          period_key: string | null
+          source: string | null
+        }
+        Relationships: []
+      }
+      client_booking_goals_effective_monthly: {
+        Row: {
+          bonus_pool_monthly: number | null
+          client_code: string | null
+          client_updated_at: string | null
+          goal_set_at: string | null
+          monthly_booking_goal: number | null
+          period_key: string | null
+          source: string | null
+        }
+        Relationships: []
+      }
       team_member_load: {
         Row: {
           active: boolean | null
@@ -570,6 +629,17 @@ export type Database = {
       norm_name: { Args: { txt: string }; Returns: string }
       normalize_url: { Args: { u: string }; Returns: string }
       to_bool: { Args: { x: string }; Returns: boolean }
+      upsert_client_booking_goal: {
+        Args: {
+          p_bonus_pool_monthly: number
+          p_changed_by: string
+          p_client_code: string
+          p_monthly_booking_goal: number
+          p_period_key: string
+          p_source: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
