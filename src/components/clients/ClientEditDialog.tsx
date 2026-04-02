@@ -271,6 +271,26 @@ export function ClientEditDialog({
         }
       }
 
+      // Send target update notification to AM if any target field changed
+      const targetFields = ['weekly_target', 'weekly_target_launch_date', 'monthly_booking_goal', 'closelix', 'bonus_pool_monthly'];
+      const changedTargets = targetFields.filter(f => f in patch);
+      if (changedTargets.length > 0 && client.assigned_account_manager_email) {
+        const { data: { user } } = await supabase.auth.getUser();
+        const changedLines = changedTargets.map(f => {
+          const oldVal = (normalizedInitial as any)?.[f] ?? '—';
+          const newVal = (normalizedCurrent as any)?.[f] ?? '—';
+          return `${f}: ${oldVal} → ${newVal}`;
+        });
+        const ccList = ['atishay@eagleinfoservice.com', 'arjav@eagleinfoservice.com', 'pm@eagleinfoservice.com'];
+        const emailText = `Hi ${client.assigned_account_manager_name ?? 'Account Manager'},\n\nTargets have been updated for the following client.\n\nClient Name: ${client.client_name ?? "-"}\nClient Code: ${client.client_code}\nClient ID: ${client.client_id}\nCompany: ${formData.client_company_name ?? "-"}\n\nChanged targets:\n${changedLines.join('\n')}\n\nUpdated by: ${user?.email ?? 'Unknown'}\n\nRegards,\nOperations`;
+        sendAssignmentEmail({
+          to: client.assigned_account_manager_email,
+          cc: ccList,
+          subject: `Target updated for ${client.client_name ?? client.client_code}`,
+          text: emailText,
+        }).catch((e) => console.warn('Failed to send target update email:', e));
+      }
+
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['metrics','global'] });
       queryClient.invalidateQueries({ queryKey: ['metrics','filtered'] });
