@@ -8,6 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useSidebarState } from '@/hooks/useSidebarState';
 import { cn } from '@/lib/utils';
 import { clientsApi, lookupsApi } from '@/lib/supabase-client';
+import { supabase } from '@/integrations/supabase/client';
+import { sendAssignmentEmail } from '@/lib/email';
 import { getGlobalTotals, getFilteredTotals, getClientsPage } from '@/lib/clientsData';
 import { diagnostics } from '@/lib/diagnostics';
 import type { Client, ClientFilters, TeamMember } from '@/types/database';
@@ -161,6 +163,33 @@ export default function Clients() {
     }
 
     try {
+      // Detect if target fields are being updated
+      const targetFields = ['weekly_target', 'weekly_target_launch_date', 'monthly_booking_goal', 'closelix', 'bonus_pool_monthly'];
+      const isTargetUpdate = targetFields.some(f => f in updates);
+
+      // Fetch current client data before update if we need to send target emails
+      let clientAmMap: Record<string, { client_name: string; client_code: string; client_id: number; am_email: string; am_name: string }> = {};
+      if (isTargetUpdate) {
+        const { data: fetchedClients } = await supabase
+          .from('clients')
+          .select('client_code, client_id, client_name, assigned_account_manager_email, assigned_account_manager_name')
+          .in('client_code', selectedClients.map(c => c.client_code))
+          .in('client_id', selectedClients.map(c => c.client_id));
+        if (fetchedClients) {
+          for (const c of fetchedClients) {
+            if (c.assigned_account_manager_email) {
+              clientAmMap[`${c.client_code}-${c.client_id}`] = {
+                client_name: c.client_name ?? '',
+                client_code: c.client_code,
+                client_id: c.client_id,
+                am_email: c.assigned_account_manager_email,
+                am_name: c.assigned_account_manager_name ?? 'Account Manager',
+              };
+            }
+          }
+        }
+      }
+
       await clientsApi.bulkUpdateClients({
         client_codes: selectedClients,
         updates
@@ -168,7 +197,29 @@ export default function Clients() {
 
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       setSelectedClients([]);
-      
+
+      // Send target update emails to AMs (fire-and-forget)
+      if (isTargetUpdate) {
+        const { data: { user } } = await supabase.auth.getUser();
+        const changedLines = targetFields
+          .filter(f => f in updates)
+          .map(f => {
+            const newVal = updates[f] ?? '—';
+            return `${f}: — → ${newVal}`;
+          });
+        const ccList = ['atishay@eagleinfoservice.com', 'arjav@eagleinfoservice.com', 'pm@eagleinfoservice.com'];
+        const emailPromises = Object.values(clientAmMap).map(clientInfo => {
+          const emailText = `Hi ${clientInfo.am_name},\n\nTargets have been updated for the following client(s) as part of a bulk update.\n\nClient Name: ${clientInfo.client_name || '-'}\nClient Code: ${clientInfo.client_code}\nClient ID: ${clientInfo.client_id}\n\nChanged targets:\n${changedLines.join('\n')}\n\nUpdated by: ${user?.email ?? 'Unknown'}\n\nRegards,\nOperations`;
+          return sendAssignmentEmail({
+            to: clientInfo.am_email,
+            cc: ccList,
+            subject: `Target updated for ${clientInfo.client_name || clientInfo.client_code}`,
+            text: emailText,
+          }).catch(e => console.warn('Failed to send bulk target email:', e));
+        });
+        Promise.all(emailPromises).catch(() => {});
+      }
+
       toast({
         title: "Bulk update successful",
         description: `Updated ${selectedClients.length} client${selectedClients.length > 1 ? 's' : ''}.`,
