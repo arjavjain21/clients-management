@@ -1,207 +1,122 @@
 // deno-lint-ignore-file
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import nodemailer from "npm:nodemailer@6.9.10";
 
-// Prefer Brevo (Sendinblue) if configured; fall back to Resend
-const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY") ?? "";
-const BREVO_SENDER_EMAIL = Deno.env.get("BREVO_SENDER_EMAIL") ?? "";
-const BREVO_SENDER_NAME = Deno.env.get("BREVO_SENDER_NAME") ?? "Operations";
-
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
-const EMAIL_FROM = Deno.env.get("EMAIL_FROM") ?? "noreply@example.com";
+const SMTP_HOST = Deno.env.get("SMTP_HOST") ?? "smtp.gmail.com";
+const SMTP_PORT = Number(Deno.env.get("SMTP_PORT") ?? "465");
+const SMTP_SECURE = SMTP_PORT === 465; // true for port 465 (SSL)
+const SMTP_USER = Deno.env.get("SMTP_USER") ?? "";
+const SMTP_PASS = Deno.env.get("SMTP_PASS") ?? "";
+const SMTP_FROM = Deno.env.get("SMTP_FROM") ?? SMTP_USER;
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Authentication check - verify JWT
+    // Authentication check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      console.log("Missing authorization header");
-      return new Response(
-        JSON.stringify({ ok: false, error: "Missing authorization header" }),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json", ...corsHeaders }
-        }
-      );
+      return new Response(JSON.stringify({ ok: false, error: "Missing authorization header" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
-
-    // Verify the JWT with Supabase
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      console.log("Authentication failed:", authError?.message);
-      return new Response(
-        JSON.stringify({ ok: false, error: "Unauthorized" }),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json", ...corsHeaders }
-        }
-      );
-    }
-
-    console.log("Authenticated user:", user.email);
 
     const { to, subject, text, cc } = await req.json();
 
     // Input validation
     if (!to || !subject || !text) {
-      console.log("Missing required fields");
-      return new Response(
-        JSON.stringify({ ok: false, error: "Missing required fields: to, subject, text" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders }
-        }
-      );
+      return new Response(JSON.stringify({ ok: false, error: "Missing required fields: to, subject, text" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
-    // Validate email format
     if (!EMAIL_REGEX.test(to)) {
-      console.log("Invalid email format:", to);
-      return new Response(
-        JSON.stringify({ ok: false, error: "Invalid email format" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders }
-        }
-      );
+      return new Response(JSON.stringify({ ok: false, error: "Invalid email format" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
-    // Validate CC email format
+    // Validate CC emails
     if (cc && Array.isArray(cc)) {
       for (const email of cc) {
         if (typeof email !== "string" || !EMAIL_REGEX.test(email)) {
-          console.log("Invalid CC email format:", email);
-          return new Response(
-            JSON.stringify({ ok: false, error: "Invalid CC email format" }),
-            {
-              status: 400,
-              headers: { "Content-Type": "application/json", ...corsHeaders }
-            }
-          );
+          return new Response(JSON.stringify({ ok: false, error: "Invalid CC email format" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          });
         }
       }
     }
 
-    // Validate input lengths
     if (subject.length > 500) {
-      return new Response(
-        JSON.stringify({ ok: false, error: "Subject too long (max 500 characters)" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders }
-        }
-      );
+      return new Response(JSON.stringify({ ok: false, error: "Subject too long" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     if (text.length > 50000) {
-      return new Response(
-        JSON.stringify({ ok: false, error: "Text too long (max 50000 characters)" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders }
-        }
-      );
-    }
-
-    const ccField = (cc && Array.isArray(cc) && cc.length > 0)
-      ? cc.map((email: string) => ({ email }))
-      : undefined;
-
-    // Try Brevo first if configured
-    let response: Response | null = null;
-    if (BREVO_API_KEY && BREVO_SENDER_EMAIL) {
-      console.log("Sending email via Brevo to:", to, ccField ? `(CC: ${cc.join(", ")})` : "");
-      const brevoBody: Record<string, unknown> = {
-        sender: { email: BREVO_SENDER_EMAIL, name: BREVO_SENDER_NAME },
-        to: [{ email: to }],
-        subject,
-        textContent: text,
-      };
-      if (ccField) brevoBody.cc = ccField;
-      response = await fetch("https://api.brevo.com/v3/smtp/email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "api-key": BREVO_API_KEY,
-        },
-        body: JSON.stringify(brevoBody),
+      return new Response(JSON.stringify({ ok: false, error: "Text too long" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       });
-    } else if (RESEND_API_KEY) {
-      console.log("Sending email via Resend to:", to, ccField ? `(CC: ${cc.join(", ")})` : "");
-      const resendBody: Record<string, unknown> = {
-        from: EMAIL_FROM,
-        to: [to],
-        subject,
-        text,
-      };
-      if (cc && Array.isArray(cc)) resendBody.cc = cc;
-      response = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${RESEND_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(resendBody),
-      });
-    } else {
-      console.log("No email provider configured");
-      return new Response(
-        JSON.stringify({ ok: false, error: "No email provider configured (set BREVO_* or RESEND_*)" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders }
-        }
-      );
     }
 
-    const body = await response.json();
-
-    if (!response.ok) {
-      console.log("Email send failed:", body);
-      return new Response(
-        JSON.stringify({ ok: false, error: body?.message ?? "send failed" }),
-        {
-          status: response.status,
-          headers: { "Content-Type": "application/json", ...corsHeaders }
-        }
-      );
-    }
-
-    console.log("Email sent successfully:", body);
-    return new Response(
-      JSON.stringify({ ok: true, id: body?.messageId || body?.id || body?.message }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders }
-      }
-    );
-  } catch (e: any) {
-    console.error("Error in send-mail function:", e);
-    return new Response(
-      JSON.stringify({ ok: false, error: e?.message ?? "unknown" }),
-      {
+    if (!SMTP_USER || !SMTP_PASS) {
+      return new Response(JSON.stringify({ ok: false, error: "SMTP not configured" }), {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders }
-      }
-    );
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      secure: SMTP_SECURE,
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS,
+      },
+    });
+
+    const mailOptions: nodemailer.SendMailOptions = {
+      from: SMTP_FROM,
+      to,
+      subject,
+      text,
+    };
+    if (cc && Array.isArray(cc) && cc.length > 0) {
+      mailOptions.cc = cc.join(", ");
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      transporter.sendMail(mailOptions, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    console.log("Email sent successfully via SMTP");
+    return new Response(JSON.stringify({ ok: true }), {
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  } catch (e: any) {
+    console.error("Error sending email:", e);
+    return new Response(JSON.stringify({ ok: false, error: e?.message ?? "unknown" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 });
