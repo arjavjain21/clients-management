@@ -20,6 +20,10 @@ export interface Client {
   bonus_pool_monthly?: number | null;
   assigned_account_manager_id?: string;
   assigned_inbox_manager_id?: string;
+  assigned_account_manager_name?: string | null;
+  assigned_account_manager_email?: string | null;
+  assigned_inbox_manager_name?: string | null;
+  assigned_inbox_manager_email?: string | null;
   assigned_sdr_id?: string;
   assigned_sdr_name?: string;
   assigned_sdr_email?: string;

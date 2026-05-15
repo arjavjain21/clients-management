@@ -273,8 +273,10 @@ export type Database = {
           client_id: number
           new_account_manager_id: string | null
           new_inbox_manager_id: string | null
+          new_sdr_id: string | null
           old_account_manager_id: string | null
           old_inbox_manager_id: string | null
+          old_sdr_id: string | null
         }
         Insert: {
           audit_id?: number
@@ -284,8 +286,10 @@ export type Database = {
           client_id: number
           new_account_manager_id?: string | null
           new_inbox_manager_id?: string | null
+          new_sdr_id?: string | null
           old_account_manager_id?: string | null
           old_inbox_manager_id?: string | null
+          old_sdr_id?: string | null
         }
         Update: {
           audit_id?: number
@@ -295,8 +299,10 @@ export type Database = {
           client_id?: number
           new_account_manager_id?: string | null
           new_inbox_manager_id?: string | null
+          new_sdr_id?: string | null
           old_account_manager_id?: string | null
           old_inbox_manager_id?: string | null
+          old_sdr_id?: string | null
         }
         Relationships: []
       }
