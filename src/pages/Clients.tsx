@@ -151,6 +151,75 @@ export default function Clients() {
     setCurrentPage(page);
   };
 
+  // CSV export of all filtered results (across all pages)
+  const [exporting, setExporting] = useState(false);
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const pageSize = 1000;
+      let page = 0;
+      const all: any[] = [];
+      while (true) {
+        const { data, count } = await getClientsPage(filters, page, pageSize, sortBy, sortOrder);
+        all.push(...data);
+        const total = count ?? all.length;
+        if (all.length >= total || data.length === 0) break;
+        page += 1;
+        if (page > 200) break;
+      }
+
+      if (all.length === 0) {
+        toast({ title: 'Nothing to export', description: 'No clients match the current filters.' });
+        return;
+      }
+
+      const columns = Object.keys(all[0]);
+      const escape = (v: any) => {
+        if (v === null || v === undefined) return '';
+        if (Array.isArray(v)) v = v.join('; ');
+        else if (typeof v === 'object') v = JSON.stringify(v);
+        const s = String(v);
+        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      };
+      const csv = [
+        columns.join(','),
+        ...all.map(row => columns.map(c => escape(row[c])).join(','))
+      ].join('\n');
+
+      const filterParts: string[] = [];
+      if (filters.search) filterParts.push(`search-${filters.search}`);
+      if (filters.relationship_status) filterParts.push(`status-${filters.relationship_status}`);
+      if (filters.relationship_type) filterParts.push(`type-${filters.relationship_type}`);
+      if (filters.assigned_account_manager_id) filterParts.push('am');
+      if (filters.assigned_inbox_manager_id) filterParts.push('im');
+      if (filters.assigned_sdr_id) filterParts.push('sdr');
+      if (filters.weekend_sending_mode) filterParts.push(`weekend-${filters.weekend_sending_mode}`);
+      if (filters.weekly_target_type) filterParts.push(`target-${filters.weekly_target_type}`);
+      if (filters.correspondence_category) filterParts.push(`cat-${filters.correspondence_category}`);
+      const filterSlug = filterParts.length
+        ? filterParts.join('_').replace(/[^a-z0-9_-]+/gi, '-').slice(0, 80)
+        : 'all';
+      const date = new Date().toISOString().slice(0, 10);
+      const filename = `clients_${filterSlug}_${all.length}rows_${date}.csv`;
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({ title: 'Export complete', description: `${all.length} clients exported.` });
+    } catch (e: any) {
+      toast({ title: 'Export failed', description: e?.message ?? 'Unknown error', variant: 'destructive' });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // Handle bulk actions
   const handleBulkUpdate = async (updates: any) => {
     if (selectedClients.length === 0) {
