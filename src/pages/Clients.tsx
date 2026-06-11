@@ -396,9 +396,9 @@ export default function Clients() {
                     <Filter className="h-4 w-4 mr-2" />
                     Filters
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
                     <Download className="h-4 w-4 mr-2" />
-                    Export
+                    {exporting ? 'Exporting...' : 'Export'}
                   </Button>
                 </div>
               </div>
