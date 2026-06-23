@@ -63,7 +63,15 @@ export function TeamMemberDetailDialog({ member, open, onOpenChange }: Props) {
 
   if (!form) return null;
 
-  const activeCount = assigned.filter((c) => !c.exit_date).length;
+  const sortedAssigned = [...assigned].sort((a, b) => {
+    const aActive = isClientActive(a.relationship_status, a.exit_date) ? 0 : 1;
+    const bActive = isClientActive(b.relationship_status, b.exit_date) ? 0 : 1;
+    if (aActive !== bActive) return aActive - bActive;
+    return (a.client_name || a.client_company_name || a.client_code || '').localeCompare(
+      b.client_name || b.client_company_name || b.client_code || ''
+    );
+  });
+  const activeCount = assigned.filter((c) => isClientActive(c.relationship_status, c.exit_date)).length;
   const byRole = {
     AM: assigned.filter((c) => c.roles.includes('AM')).length,
     IM: assigned.filter((c) => c.roles.includes('IM')).length,
@@ -72,13 +80,13 @@ export function TeamMemberDetailDialog({ member, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
           <DialogTitle>{member?.full_name}</DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-6">
+        <ScrollArea className="flex-1 min-h-0 px-6">
+          <div className="space-y-6 pb-6">
             {/* Stats */}
             <div className="grid grid-cols-4 gap-2">
               <Stat label="Total" value={assigned.length} />
