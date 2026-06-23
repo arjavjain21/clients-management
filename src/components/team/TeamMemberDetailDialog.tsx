@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
+import { isClientActive } from '@/config/statusBuckets';
 import {
   TeamMember,
   TeamMemberRole,
@@ -62,7 +63,15 @@ export function TeamMemberDetailDialog({ member, open, onOpenChange }: Props) {
 
   if (!form) return null;
 
-  const activeCount = assigned.filter((c) => !c.exit_date).length;
+  const sortedAssigned = [...assigned].sort((a, b) => {
+    const aActive = isClientActive(a.relationship_status, a.exit_date) ? 0 : 1;
+    const bActive = isClientActive(b.relationship_status, b.exit_date) ? 0 : 1;
+    if (aActive !== bActive) return aActive - bActive;
+    return (a.client_name || a.client_company_name || a.client_code || '').localeCompare(
+      b.client_name || b.client_company_name || b.client_code || ''
+    );
+  });
+  const activeCount = assigned.filter((c) => isClientActive(c.relationship_status, c.exit_date)).length;
   const byRole = {
     AM: assigned.filter((c) => c.roles.includes('AM')).length,
     IM: assigned.filter((c) => c.roles.includes('IM')).length,
@@ -71,13 +80,13 @@ export function TeamMemberDetailDialog({ member, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
           <DialogTitle>{member?.full_name}</DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-6">
+        <ScrollArea className="flex-1 min-h-0 px-6">
+          <div className="space-y-6 pb-6">
             {/* Stats */}
             <div className="grid grid-cols-4 gap-2">
               <Stat label="Total" value={assigned.length} />
@@ -159,7 +168,7 @@ export function TeamMemberDetailDialog({ member, open, onOpenChange }: Props) {
             {/* Assigned clients */}
             <div className="space-y-3">
               <h3 className="font-semibold text-sm uppercase text-muted-foreground">
-                Assigned Clients ({assigned.length})
+                Assigned Clients ({assigned.length} total • {activeCount} active)
               </h3>
               {clientsLoading ? (
                 <p className="text-sm text-muted-foreground">Loading…</p>
@@ -167,42 +176,47 @@ export function TeamMemberDetailDialog({ member, open, onOpenChange }: Props) {
                 <p className="text-sm text-muted-foreground">No clients assigned.</p>
               ) : (
                 <div className="border rounded divide-y">
-                  {assigned.map((c) => (
-                    <div
-                      key={c.client_code ?? c.client_name}
-                      className="p-3 flex items-center justify-between gap-3"
-                    >
-                      <div className="min-w-0">
-                        <div className="font-medium truncate">
-                          {c.client_name || c.client_company_name || c.client_code}
-                          {c.client_code && (
-                            <span className="ml-2 text-xs text-muted-foreground">
-                              [{c.client_code}]
-                            </span>
-                          )}
+                  {sortedAssigned.map((c) => {
+                    const active = isClientActive(c.relationship_status, c.exit_date);
+                    return (
+                      <div
+                        key={c.client_code ?? c.client_name}
+                        className={`p-3 flex items-center justify-between gap-3 ${active ? '' : 'opacity-60'}`}
+                      >
+                        <div className="min-w-0">
+                          <div className="font-medium truncate flex items-center gap-2">
+                            <span>{c.client_name || c.client_company_name || c.client_code}</span>
+                            {c.client_code && (
+                              <span className="text-xs text-muted-foreground">[{c.client_code}]</span>
+                            )}
+                            <Badge variant={active ? 'default' : 'outline'} className="text-[10px]">
+                              {active ? 'ACTIVE' : 'INACTIVE'}
+                            </Badge>
+                          </div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            {c.client_company_name && `${c.client_company_name} • `}
+                            {c.relationship_type ?? '—'} • {c.relationship_status ?? '—'}
+                            {c.exit_date && ` • exited ${c.exit_date}`}
+                          </div>
                         </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {c.client_company_name && `${c.client_company_name} • `}
-                          {c.relationship_type ?? '—'} • {c.relationship_status ?? '—'}
-                          {c.exit_date && ` • exited ${c.exit_date}`}
+                        <div className="flex gap-1 shrink-0">
+                          {c.roles.map((r) => (
+                            <Badge key={r} variant="secondary" className="text-xs">
+                              {r}
+                            </Badge>
+                          ))}
                         </div>
                       </div>
-                      <div className="flex gap-1 shrink-0">
-                        {c.roles.map((r) => (
-                          <Badge key={r} variant="secondary" className="text-xs">
-                            {r}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
           </div>
         </ScrollArea>
 
-        <DialogFooter>
+        <DialogFooter className="px-6 py-4 border-t shrink-0">
+
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
