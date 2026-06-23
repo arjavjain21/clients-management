@@ -168,7 +168,7 @@ export function TeamMemberDetailDialog({ member, open, onOpenChange }: Props) {
             {/* Assigned clients */}
             <div className="space-y-3">
               <h3 className="font-semibold text-sm uppercase text-muted-foreground">
-                Assigned Clients ({assigned.length})
+                Assigned Clients ({assigned.length} total • {activeCount} active)
               </h3>
               {clientsLoading ? (
                 <p className="text-sm text-muted-foreground">Loading…</p>
@@ -176,42 +176,47 @@ export function TeamMemberDetailDialog({ member, open, onOpenChange }: Props) {
                 <p className="text-sm text-muted-foreground">No clients assigned.</p>
               ) : (
                 <div className="border rounded divide-y">
-                  {assigned.map((c) => (
-                    <div
-                      key={c.client_code ?? c.client_name}
-                      className="p-3 flex items-center justify-between gap-3"
-                    >
-                      <div className="min-w-0">
-                        <div className="font-medium truncate">
-                          {c.client_name || c.client_company_name || c.client_code}
-                          {c.client_code && (
-                            <span className="ml-2 text-xs text-muted-foreground">
-                              [{c.client_code}]
-                            </span>
-                          )}
+                  {sortedAssigned.map((c) => {
+                    const active = isClientActive(c.relationship_status, c.exit_date);
+                    return (
+                      <div
+                        key={c.client_code ?? c.client_name}
+                        className={`p-3 flex items-center justify-between gap-3 ${active ? '' : 'opacity-60'}`}
+                      >
+                        <div className="min-w-0">
+                          <div className="font-medium truncate flex items-center gap-2">
+                            <span>{c.client_name || c.client_company_name || c.client_code}</span>
+                            {c.client_code && (
+                              <span className="text-xs text-muted-foreground">[{c.client_code}]</span>
+                            )}
+                            <Badge variant={active ? 'default' : 'outline'} className="text-[10px]">
+                              {active ? 'ACTIVE' : 'INACTIVE'}
+                            </Badge>
+                          </div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            {c.client_company_name && `${c.client_company_name} • `}
+                            {c.relationship_type ?? '—'} • {c.relationship_status ?? '—'}
+                            {c.exit_date && ` • exited ${c.exit_date}`}
+                          </div>
                         </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {c.client_company_name && `${c.client_company_name} • `}
-                          {c.relationship_type ?? '—'} • {c.relationship_status ?? '—'}
-                          {c.exit_date && ` • exited ${c.exit_date}`}
+                        <div className="flex gap-1 shrink-0">
+                          {c.roles.map((r) => (
+                            <Badge key={r} variant="secondary" className="text-xs">
+                              {r}
+                            </Badge>
+                          ))}
                         </div>
                       </div>
-                      <div className="flex gap-1 shrink-0">
-                        {c.roles.map((r) => (
-                          <Badge key={r} variant="secondary" className="text-xs">
-                            {r}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
           </div>
         </ScrollArea>
 
-        <DialogFooter>
+        <DialogFooter className="px-6 py-4 border-t shrink-0">
+
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
