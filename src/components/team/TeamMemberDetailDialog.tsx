@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
+import { isClientActive } from '@/config/statusBuckets';
 import {
   TeamMember,
   TeamMemberRole,
