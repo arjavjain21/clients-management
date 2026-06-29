@@ -123,6 +123,82 @@ export async function getFilteredTotals(filters: ClientFilters) {
   return { filteredTotal: result.count ?? 0 };
 }
 
+export interface CreateClientInput {
+  client_code: string;
+  client_id?: number | null;
+  client_name?: string | null;
+  client_email?: string | null;
+  client_company_name?: string | null;
+  client_website?: string | null;
+  phone_number?: string | null;
+  booking_link?: string | null;
+  relationship_status?: string | null;
+  relationship_type?: string | null;
+  weekend_sending_mode?: 'inherit' | 'true' | 'false' | null;
+  onboarding_activated?: boolean | null;
+  onboarding_date?: string | null;
+  exit_date?: string | null;
+  recurring_cost_usd?: number | null;
+  weekly_target?: string | null;
+  weekly_target_launch_date?: string | null;
+  monthly_booking_goal?: number | null;
+  bonus_pool_monthly?: number | null;
+  closelix?: boolean | null;
+  assigned_account_manager_id?: string | null;
+  assigned_inbox_manager_id?: string | null;
+  assigned_sdr_id?: string | null;
+  correspondence_emails?: string[] | null;
+  correspondence_categories?: string[] | null;
+  notes?: string | null;
+}
+
+export async function createClient(input: CreateClientInput) {
+  const code = (input.client_code || '').trim();
+  if (!code) throw new Error('Client code is required');
+
+  // Auto-generate client_id when not provided: max(client_id)+1
+  let clientId = input.client_id ?? null;
+  if (clientId === null || clientId === undefined || Number.isNaN(Number(clientId))) {
+    const { data: maxRow, error: maxErr } = await supabase
+      .from('clients')
+      .select('client_id')
+      .order('client_id', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (maxErr) throw maxErr;
+    clientId = ((maxRow?.client_id as number | undefined) ?? 0) + 1;
+  }
+
+  // Check uniqueness of composite PK
+  const { data: existing, error: existErr } = await supabase
+    .from('clients')
+    .select('client_code, client_id')
+    .eq('client_code', code)
+    .eq('client_id', clientId)
+    .maybeSingle();
+  if (existErr) throw existErr;
+  if (existing) {
+    throw new Error(`A client with code "${code}" and id ${clientId} already exists`);
+  }
+
+  const payload: any = { ...input, client_code: code, client_id: clientId };
+  // Strip empty strings -> null for optional text fields
+  Object.keys(payload).forEach((k) => {
+    if (payload[k] === '' || payload[k] === undefined) payload[k] = null;
+  });
+  // Arrays default
+  if (!Array.isArray(payload.correspondence_emails)) payload.correspondence_emails = [];
+  if (!Array.isArray(payload.correspondence_categories)) payload.correspondence_categories = [];
+
+  const { data, error } = await supabase
+    .from('clients')
+    .insert(payload as any)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export async function getClientsPage(
   filters: ClientFilters,
   page: number,
