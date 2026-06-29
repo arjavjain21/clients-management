@@ -469,7 +469,7 @@ export function ClientEditDialog({
               <div>
                 <Label htmlFor="assigned_account_manager_id">Account Manager</Label>
                 <Select
-                  value={formData.assigned_account_manager_id}
+                  value={formData.assigned_account_manager_id || 'unassigned'}
                   onValueChange={(value) => setFormData({ ...formData, assigned_account_manager_id: value === 'unassigned' ? null : value })}
                 >
                   <SelectTrigger>
@@ -488,8 +488,9 @@ export function ClientEditDialog({
               <div>
                 <Label htmlFor="assigned_inbox_manager_id">Inbox Manager</Label>
                 <Select
-                  value={formData.assigned_inbox_manager_id}
+                  value={formData.assigned_inbox_manager_id || 'unassigned'}
                   onValueChange={(value) => setFormData({ ...formData, assigned_inbox_manager_id: value === 'unassigned' ? null : value })}
+
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select inbox manager" />
