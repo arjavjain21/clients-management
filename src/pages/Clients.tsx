@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Search, Filter, Download, Users, Settings, X, Clock, RotateCcw } from 'lucide-react';
+import { Search, Filter, Download, Users, Settings, X, Clock, RotateCcw, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -20,6 +20,7 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { ClientEditDialog } from '@/components/clients/ClientEditDialog';
+import { ClientCreateDialog } from '@/components/clients/ClientCreateDialog';
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 
 const CLIENTS_PER_PAGE = 50;
@@ -37,6 +38,7 @@ export default function Clients() {
   const [collapsed, setCollapsed] = useSidebarState();
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [createOpen, setCreateOpen] = useState(false);
   const [sortByRecentUpdates, setSortByRecentUpdates] = useState(false);
   const [previousSort, setPreviousSort] = useState({ sortBy: 'client_name', sortOrder: 'asc' as 'asc' | 'desc' });
 
@@ -400,6 +402,10 @@ export default function Clients() {
                     <Download className="h-4 w-4 mr-2" />
                     {exporting ? 'Exporting...' : 'Export'}
                   </Button>
+                  <Button size="sm" onClick={() => setCreateOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Client
+                  </Button>
                 </div>
               </div>
 
@@ -544,6 +550,7 @@ export default function Clients() {
           open={!!editingClient}
           onOpenChange={(open) => !open && setEditingClient(null)}
         />
+        <ClientCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
       </AuthGuard>
     );
   }
