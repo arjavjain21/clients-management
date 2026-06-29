@@ -324,7 +324,7 @@ export function ClientCreateDialog({ open, onOpenChange }: ClientCreateDialogPro
                   <SelectItem value={NONE}>— Unassigned —</SelectItem>
                   {accountManagers.map((m: any) => (
                     <SelectItem key={m.id} value={m.id}>
-                      {m.name}
+                      {m.full_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -345,7 +345,7 @@ export function ClientCreateDialog({ open, onOpenChange }: ClientCreateDialogPro
                   <SelectItem value={NONE}>— Unassigned —</SelectItem>
                   {inboxManagers.map((m: any) => (
                     <SelectItem key={m.id} value={m.id}>
-                      {m.name}
+                      {m.full_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -364,7 +364,7 @@ export function ClientCreateDialog({ open, onOpenChange }: ClientCreateDialogPro
                   <SelectItem value={NONE}>— Unassigned —</SelectItem>
                   {sdrs.map((m: any) => (
                     <SelectItem key={m.id} value={m.id}>
-                      {m.name}
+                      {m.full_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
