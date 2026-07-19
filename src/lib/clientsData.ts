@@ -119,7 +119,7 @@ export async function getFilteredTotals(filters: ClientFilters) {
     .from('clients')
     .select('client_id', { count: 'exact', head: true });
   
-  query = applyFilters(query, filters);
+  query = await applyFilters(query, filters);
   
   const result = await query;
   if (result.error) throw result.error;
