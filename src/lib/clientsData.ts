@@ -95,15 +95,16 @@ export async function getGlobalTotals() {
 
 // Filtered totals: same predicate as the grid
 export async function getFilteredTotals(filters: ClientFilters) {
-  let query = supabase
+  const resolved = await resolveAsyncFilters(filters);
+  let query: any = supabase
     .from('clients')
     .select('client_id', { count: 'exact', head: true });
-  
-  query = await applyFilters(query, filters);
-  
+
+  query = applyFilters(query, filters, resolved);
+
   const result = await query;
   if (result.error) throw result.error;
-  
+
   return { filteredTotal: result.count ?? 0 };
 }
 
