@@ -124,6 +124,8 @@ export interface ClientFilters {
   weekly_target_type?: 'numeric' | 'launch' | 'none';
   has_correspondence_emails?: boolean;
   correspondence_category?: 'feedback' | 'positives';
+  /** Point-in-time filter: only clients that were ACTIVE on this calendar date (YYYY-MM-DD). */
+  active_on_date?: string;
 }
 
 export interface ClientUpdateData {
