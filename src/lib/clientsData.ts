@@ -2,81 +2,61 @@ import { supabase } from '@/integrations/supabase/client';
 import { INACTIVE_STATUSES } from '@/config/statusBuckets';
 import type { ClientFilters } from '@/types/database';
 
-async function applyFilters(query: any, filters?: ClientFilters) {
+// Resolve any async filter dependencies (e.g. RPC for active_on_date) up-front.
+async function resolveAsyncFilters(filters?: ClientFilters): Promise<{ activeCodes?: string[] }> {
+  if (!filters?.active_on_date) return {};
+  const { data, error } = await supabase.rpc('clients_active_on' as any, { p_date: filters.active_on_date });
+  if (error) throw error;
+  const activeCodes = (data ?? []).map((r: any) => r.client_code);
+  return { activeCodes };
+}
+
+function applyFilters(query: any, filters?: ClientFilters, resolved?: { activeCodes?: string[] }) {
   if (!filters) return query;
-  
+
   if (filters.search) {
     const s = filters.search;
     query = query.or(`client_name.ilike.%${s}%,client_email.ilike.%${s}%,client_code.ilike.%${s}%`);
   }
-  
-  if (filters.relationship_status) {
-    query = query.eq('relationship_status', filters.relationship_status);
-  }
-  
-  if (filters.relationship_type) {
-    query = query.eq('relationship_type', filters.relationship_type);
-  }
-  
-  if (filters.weekend_sending_mode) {
-    query = query.eq('weekend_sending_mode', filters.weekend_sending_mode);
-  }
-  
+  if (filters.relationship_status) query = query.eq('relationship_status', filters.relationship_status);
+  if (filters.relationship_type) query = query.eq('relationship_type', filters.relationship_type);
+  if (filters.weekend_sending_mode) query = query.eq('weekend_sending_mode', filters.weekend_sending_mode);
+
   if (filters.assigned_account_manager_id) {
-    if (filters.assigned_account_manager_id === 'unassigned') {
-      query = query.is('assigned_account_manager_id', null);
-    } else {
-      query = query.eq('assigned_account_manager_id', filters.assigned_account_manager_id);
-    }
+    if (filters.assigned_account_manager_id === 'unassigned') query = query.is('assigned_account_manager_id', null);
+    else query = query.eq('assigned_account_manager_id', filters.assigned_account_manager_id);
   }
-  
   if (filters.assigned_inbox_manager_id) {
-    if (filters.assigned_inbox_manager_id === 'unassigned') {
-      query = query.is('assigned_inbox_manager_id', null);
-    } else {
-      query = query.eq('assigned_inbox_manager_id', filters.assigned_inbox_manager_id);
-    }
+    if (filters.assigned_inbox_manager_id === 'unassigned') query = query.is('assigned_inbox_manager_id', null);
+    else query = query.eq('assigned_inbox_manager_id', filters.assigned_inbox_manager_id);
   }
-  
   if (filters.assigned_sdr_id) {
-    if (filters.assigned_sdr_id === 'unassigned') {
-      query = query.is('assigned_sdr_id', null);
-    } else {
-      query = query.eq('assigned_sdr_id', filters.assigned_sdr_id);
-    }
+    if (filters.assigned_sdr_id === 'unassigned') query = query.is('assigned_sdr_id', null);
+    else query = query.eq('assigned_sdr_id', filters.assigned_sdr_id);
   }
-  
-  if (filters.weekly_target_type) {
-    if (filters.weekly_target_type === 'numeric') {
-      query = query.not('weekly_target', 'is', null).is('weekly_target_launch_date', null);
-    } else if (filters.weekly_target_type === 'launch') {
-      query = query.not('weekly_target_launch_date', 'is', null);
-    } else if (filters.weekly_target_type === 'none') {
-      query = query.is('weekly_target', null).is('weekly_target_launch_date', null);
-    }
+
+  if (filters.weekly_target_type === 'numeric') {
+    query = query.not('weekly_target', 'is', null).is('weekly_target_launch_date', null);
+  } else if (filters.weekly_target_type === 'launch') {
+    query = query.not('weekly_target_launch_date', 'is', null);
+  } else if (filters.weekly_target_type === 'none') {
+    query = query.is('weekly_target', null).is('weekly_target_launch_date', null);
   }
-  
+
   if (filters.has_correspondence_emails !== undefined) {
-    if (filters.has_correspondence_emails) {
-      query = query.not('correspondence_emails', 'eq', '{}');
-    } else {
-      query = query.or('correspondence_emails.is.null,correspondence_emails.eq.{}');
-    }
+    if (filters.has_correspondence_emails) query = query.not('correspondence_emails', 'eq', '{}');
+    else query = query.or('correspondence_emails.is.null,correspondence_emails.eq.{}');
   }
-  
+
   if (filters.correspondence_category) {
     query = query.contains('correspondence_categories', [filters.correspondence_category]);
   }
 
-  // Point-in-time "active as of date" filter — resolved via server-side RPC
   if (filters.active_on_date) {
-    const { data, error } = await supabase.rpc('clients_active_on' as any, { p_date: filters.active_on_date });
-    if (error) throw error;
-    const codes = (data ?? []).map((r: any) => r.client_code);
-    // No matches — force an empty result set without breaking pagination.
+    const codes = resolved?.activeCodes ?? [];
     query = query.in('client_code', codes.length > 0 ? codes : ['__no_match__']);
   }
-  
+
   return query;
 }
 
