@@ -796,6 +796,12 @@ export type Database = {
         Args: { p_client_code: string; p_client_id: number; p_group: string }
         Returns: string
       }
+      clients_active_on: {
+        Args: { p_date: string }
+        Returns: {
+          client_code: string
+        }[]
+      }
       current_user_uid: { Args: never; Returns: string }
       next_round_robin_member: { Args: { p_group: string }; Returns: string }
       norm_name: { Args: { txt: string }; Returns: string }
