@@ -215,7 +215,7 @@ export async function getClientsPage(
     .select('*', { count: 'exact' });
 
   // Apply filters using the same logic
-  query = applyFilters(query, filters);
+  query = await applyFilters(query, filters);
   
   // Apply sorting
   const ascending = sortOrder === 'asc';
