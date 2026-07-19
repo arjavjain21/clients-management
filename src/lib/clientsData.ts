@@ -191,13 +191,14 @@ export async function getClientsPage(
   sortBy: string = 'client_name',
   sortOrder: 'asc' | 'desc' = 'asc'
 ) {
-  let query = supabase
+  const resolved = await resolveAsyncFilters(filters);
+  let query: any = supabase
     .from('clients')
     .select('*', { count: 'exact' });
 
   // Apply filters using the same logic
-  query = await applyFilters(query, filters);
-  
+  query = applyFilters(query, filters, resolved);
+
   // Apply sorting
   const ascending = sortOrder === 'asc';
   query = query.order(sortBy, { ascending });
