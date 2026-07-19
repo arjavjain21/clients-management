@@ -2,7 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { INACTIVE_STATUSES } from '@/config/statusBuckets';
 import type { ClientFilters } from '@/types/database';
 
-function applyFilters(query: any, filters?: ClientFilters) {
+async function applyFilters(query: any, filters?: ClientFilters) {
   if (!filters) return query;
   
   if (filters.search) {
@@ -48,34 +48,38 @@ function applyFilters(query: any, filters?: ClientFilters) {
   
   if (filters.weekly_target_type) {
     if (filters.weekly_target_type === 'numeric') {
-      // Has weekly_target but no launch date
       query = query.not('weekly_target', 'is', null).is('weekly_target_launch_date', null);
     } else if (filters.weekly_target_type === 'launch') {
-      // Has a launch date set
       query = query.not('weekly_target_launch_date', 'is', null);
     } else if (filters.weekly_target_type === 'none') {
-      // No weekly target set
       query = query.is('weekly_target', null).is('weekly_target_launch_date', null);
     }
   }
   
   if (filters.has_correspondence_emails !== undefined) {
     if (filters.has_correspondence_emails) {
-      // Has at least one correspondence email - array is not empty
       query = query.not('correspondence_emails', 'eq', '{}');
     } else {
-      // No correspondence emails - array is empty or null
       query = query.or('correspondence_emails.is.null,correspondence_emails.eq.{}');
     }
   }
   
   if (filters.correspondence_category) {
-    // Filter clients that have this category in their correspondence_categories array
     query = query.contains('correspondence_categories', [filters.correspondence_category]);
+  }
+
+  // Point-in-time "active as of date" filter — resolved via server-side RPC
+  if (filters.active_on_date) {
+    const { data, error } = await supabase.rpc('clients_active_on' as any, { p_date: filters.active_on_date });
+    if (error) throw error;
+    const codes = (data ?? []).map((r: any) => r.client_code);
+    // No matches — force an empty result set without breaking pagination.
+    query = query.in('client_code', codes.length > 0 ? codes : ['__no_match__']);
   }
   
   return query;
 }
+
 
 // Global totals: unaffected by UI filters
 export async function getGlobalTotals() {
@@ -115,7 +119,7 @@ export async function getFilteredTotals(filters: ClientFilters) {
     .from('clients')
     .select('client_id', { count: 'exact', head: true });
   
-  query = applyFilters(query, filters);
+  query = await applyFilters(query, filters);
   
   const result = await query;
   if (result.error) throw result.error;
@@ -211,7 +215,7 @@ export async function getClientsPage(
     .select('*', { count: 'exact' });
 
   // Apply filters using the same logic
-  query = applyFilters(query, filters);
+  query = await applyFilters(query, filters);
   
   // Apply sorting
   const ascending = sortOrder === 'asc';

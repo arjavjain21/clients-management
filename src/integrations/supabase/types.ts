@@ -606,6 +606,172 @@ export type Database = {
         }
         Relationships: []
       }
+      clients_readonly: {
+        Row: {
+          assigned_account_manager_email: string | null
+          assigned_account_manager_id: string | null
+          assigned_account_manager_name: string | null
+          assigned_am_slack_uid: string | null
+          assigned_inbox_manager_email: string | null
+          assigned_inbox_manager_id: string | null
+          assigned_inbox_manager_name: string | null
+          assigned_sdr_email: string | null
+          assigned_sdr_id: string | null
+          assigned_sdr_name: string | null
+          booking_link: string | null
+          client_code: string | null
+          client_company_name: string | null
+          client_id: number | null
+          client_website: string | null
+          closelix: boolean | null
+          correspondence_categories: string[] | null
+          monthly_booking_goal: number | null
+          onboarding_date: string | null
+          relationship_status: string | null
+          relationship_type: string | null
+          weekend_sending_mode: string | null
+          weekly_target: string | null
+          weekly_target_launch_date: string | null
+        }
+        Insert: {
+          assigned_account_manager_email?: string | null
+          assigned_account_manager_id?: string | null
+          assigned_account_manager_name?: string | null
+          assigned_am_slack_uid?: string | null
+          assigned_inbox_manager_email?: string | null
+          assigned_inbox_manager_id?: string | null
+          assigned_inbox_manager_name?: string | null
+          assigned_sdr_email?: string | null
+          assigned_sdr_id?: string | null
+          assigned_sdr_name?: string | null
+          booking_link?: string | null
+          client_code?: string | null
+          client_company_name?: string | null
+          client_id?: number | null
+          client_website?: string | null
+          closelix?: boolean | null
+          correspondence_categories?: string[] | null
+          monthly_booking_goal?: number | null
+          onboarding_date?: string | null
+          relationship_status?: string | null
+          relationship_type?: string | null
+          weekend_sending_mode?: string | null
+          weekly_target?: string | null
+          weekly_target_launch_date?: string | null
+        }
+        Update: {
+          assigned_account_manager_email?: string | null
+          assigned_account_manager_id?: string | null
+          assigned_account_manager_name?: string | null
+          assigned_am_slack_uid?: string | null
+          assigned_inbox_manager_email?: string | null
+          assigned_inbox_manager_id?: string | null
+          assigned_inbox_manager_name?: string | null
+          assigned_sdr_email?: string | null
+          assigned_sdr_id?: string | null
+          assigned_sdr_name?: string | null
+          booking_link?: string | null
+          client_code?: string | null
+          client_company_name?: string | null
+          client_id?: number | null
+          client_website?: string | null
+          closelix?: boolean | null
+          correspondence_categories?: string[] | null
+          monthly_booking_goal?: number | null
+          onboarding_date?: string | null
+          relationship_status?: string | null
+          relationship_type?: string | null
+          weekend_sending_mode?: string | null
+          weekly_target?: string | null
+          weekly_target_launch_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_assigned_account_manager_id_fkey"
+            columns: ["assigned_account_manager_id"]
+            isOneToOne: false
+            referencedRelation: "team_member_load"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "clients_assigned_account_manager_id_fkey"
+            columns: ["assigned_account_manager_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_assigned_inbox_manager_id_fkey"
+            columns: ["assigned_inbox_manager_id"]
+            isOneToOne: false
+            referencedRelation: "team_member_load"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "clients_assigned_inbox_manager_id_fkey"
+            columns: ["assigned_inbox_manager_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_assigned_sdr_id_fkey"
+            columns: ["assigned_sdr_id"]
+            isOneToOne: false
+            referencedRelation: "team_member_load"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "clients_assigned_sdr_id_fkey"
+            columns: ["assigned_sdr_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_relationship_status_fkey"
+            columns: ["relationship_status"]
+            isOneToOne: false
+            referencedRelation: "relationship_statuses"
+            referencedColumns: ["name"]
+          },
+          {
+            foreignKeyName: "clients_relationship_type_fkey"
+            columns: ["relationship_type"]
+            isOneToOne: false
+            referencedRelation: "relationship_types"
+            referencedColumns: ["name"]
+          },
+          {
+            foreignKeyName: "fk_clients_am"
+            columns: ["assigned_account_manager_id"]
+            isOneToOne: false
+            referencedRelation: "team_member_load"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "fk_clients_am"
+            columns: ["assigned_account_manager_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_clients_im"
+            columns: ["assigned_inbox_manager_id"]
+            isOneToOne: false
+            referencedRelation: "team_member_load"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "fk_clients_im"
+            columns: ["assigned_inbox_manager_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_member_load: {
         Row: {
           active: boolean | null
@@ -629,6 +795,12 @@ export type Database = {
       assign_inbox_manager: {
         Args: { p_client_code: string; p_client_id: number; p_group: string }
         Returns: string
+      }
+      clients_active_on: {
+        Args: { p_date: string }
+        Returns: {
+          client_code: string
+        }[]
       }
       current_user_uid: { Args: never; Returns: string }
       next_round_robin_member: { Args: { p_group: string }; Returns: string }

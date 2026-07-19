@@ -259,6 +259,34 @@ export function ClientsFilters({
             </SelectContent>
           </Select>
         </div>
+
+        {/* Active on date (point-in-time) */}
+        <div className="space-y-2">
+          <Label htmlFor="active-on-date">Active on date</Label>
+          <div className="flex items-center gap-2">
+            <Input
+              id="active-on-date"
+              type="date"
+              value={filters.active_on_date || ''}
+              onChange={(e) => updateFilter('active_on_date', e.target.value || undefined)}
+              max={new Date().toISOString().slice(0, 10)}
+            />
+            {filters.active_on_date && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => updateFilter('active_on_date', undefined)}
+                className="h-8 w-8 p-0"
+                aria-label="Clear date"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Shows clients whose status was active on this date (uses status history).
+          </p>
+        </div>
       </div>
     </Card>
   );
