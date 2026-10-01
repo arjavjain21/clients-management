@@ -9,7 +9,7 @@ import { useSidebarState } from '@/hooks/useSidebarState';
 import { cn } from '@/lib/utils';
 import { clientsApi, lookupsApi } from '@/lib/supabase-client';
 import { supabase } from '@/integrations/supabase/client';
-import { sendAssignmentEmail } from '@/lib/email';
+import { sendAssignmentEmail, notifyNewAssignments, NOTIFY_CC } from '@/lib/email';
 import { getGlobalTotals, getFilteredTotals, getClientsPage } from '@/lib/clientsData';
 import { diagnostics } from '@/lib/diagnostics';
 import type { Client, ClientFilters, TeamMember } from '@/types/database';
@@ -238,27 +238,24 @@ export default function Clients() {
       const targetFields = ['weekly_target', 'weekly_target_launch_date', 'monthly_booking_goal', 'closelix', 'bonus_pool_monthly'];
       const isTargetUpdate = targetFields.some(f => f in updates);
 
-      // Fetch current client data before update if we need to send target emails
+      const assignFields = [
+        ['assigned_account_manager_id', 'am'],
+        ['assigned_inbox_manager_id', 'im'],
+        ['assigned_sdr_id', 'sdr'],
+      ] as const;
+      const isAssignUpdate = assignFields.some(([f]) => updates[f]);
+
+      // Fetch current client data before update (for target emails + detecting real assignment changes)
       let clientAmMap: Record<string, { client_name: string; client_code: string; client_id: number; am_email: string; am_name: string }> = {};
-      if (isTargetUpdate) {
+      let beforeRows: any[] = [];
+      if (isTargetUpdate || isAssignUpdate) {
+        const keys = new Set(selectedClients.map(c => `${c.client_code}-${c.client_id}`));
         const { data: fetchedClients } = await supabase
           .from('clients')
-          .select('client_code, client_id, client_name, assigned_account_manager_email, assigned_account_manager_name')
+          .select('client_code, client_id, client_name, client_company_name, assigned_account_manager_id, assigned_inbox_manager_id, assigned_sdr_id, assigned_account_manager_email, assigned_account_manager_name')
           .in('client_code', selectedClients.map(c => c.client_code))
           .in('client_id', selectedClients.map(c => c.client_id));
-        if (fetchedClients) {
-          for (const c of fetchedClients) {
-            if (c.assigned_account_manager_email) {
-              clientAmMap[`${c.client_code}-${c.client_id}`] = {
-                client_name: c.client_name ?? '',
-                client_code: c.client_code,
-                client_id: c.client_id,
-                am_email: c.assigned_account_manager_email,
-                am_name: c.assigned_account_manager_name ?? 'Account Manager',
-              };
-            }
-          }
-        }
+        beforeRows = (fetchedClients ?? []).filter((c: any) => keys.has(`${c.client_code}-${c.client_id}`));
       }
 
       await clientsApi.bulkUpdateClients({
@@ -269,21 +266,41 @@ export default function Clients() {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       setSelectedClients([]);
 
-      // Send target update emails to AMs (fire-and-forget)
+      // Email newly assigned AM / IM / SDR (only where the assignee actually changed)
+      if (isAssignUpdate) {
+        const list: Parameters<typeof notifyNewAssignments>[0] = [];
+        for (const c of beforeRows) {
+          for (const [f, role] of assignFields) {
+            if (updates[f] && updates[f] !== c[f]) list.push({ role, memberId: updates[f], client: c });
+          }
+        }
+        notifyNewAssignments(list).catch(e => console.warn('Bulk assignment emails failed:', e));
+      }
+
+      // Target updates: email ONLY the account manager (after any AM change in the same update)
       if (isTargetUpdate) {
+        let amOverride: { email: string; full_name: string } | null = null;
+        if (updates.assigned_account_manager_id) {
+          const { data: am } = await supabase.from('team_members').select('email, full_name').eq('id', updates.assigned_account_manager_id).maybeSingle();
+          amOverride = am ?? null;
+        }
+        for (const c of beforeRows) {
+          const email = amOverride?.email ?? c.assigned_account_manager_email;
+          if (!email) continue;
+          clientAmMap[`${c.client_code}-${c.client_id}`] = {
+            client_name: c.client_name ?? '', client_code: c.client_code, client_id: c.client_id,
+            am_email: email, am_name: amOverride?.full_name ?? c.assigned_account_manager_name ?? 'Account Manager',
+          };
+        }
         const { data: { user } } = await supabase.auth.getUser();
         const changedLines = targetFields
           .filter(f => f in updates)
-          .map(f => {
-            const newVal = updates[f] ?? '—';
-            return `${f}: — → ${newVal}`;
-          });
-        const ccList = ['atishay@eagleinfoservice.com', 'arjav@eagleinfoservice.com', 'pm@eagleinfoservice.com'];
+          .map(f => `${f}: → ${updates[f] ?? '—'}`);
         const emailPromises = Object.values(clientAmMap).map(clientInfo => {
           const emailText = `Hi ${clientInfo.am_name},\n\nTargets have been updated for the following client(s) as part of a bulk update.\n\nClient Name: ${clientInfo.client_name || '-'}\nClient Code: ${clientInfo.client_code}\nClient ID: ${clientInfo.client_id}\n\nChanged targets:\n${changedLines.join('\n')}\n\nUpdated by: ${user?.email ?? 'Unknown'}\n\nRegards,\nOperations`;
           return sendAssignmentEmail({
             to: clientInfo.am_email,
-            cc: ccList,
+            cc: NOTIFY_CC,
             subject: `Target updated for ${clientInfo.client_name || clientInfo.client_code}`,
             text: emailText,
           }).catch(e => console.warn('Failed to send bulk target email:', e));

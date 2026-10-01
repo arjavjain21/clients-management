@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { listTeamMembers } from '@/lib/teamMembersData';
-import { sendAssignmentEmail } from '@/lib/email';
+import { sendAssignmentEmail, notifyNewAssignments, NOTIFY_CC } from "@/lib/email";
 import type { Client } from '@/types/database';
 import {
   Dialog,
@@ -220,7 +220,7 @@ export function ClientEditDialog({
         return;
       }
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("clients")
         .update(patch)
         .eq("client_code", client.client_code)
@@ -230,61 +230,33 @@ export function ClientEditDialog({
       
       if (error) throw error;
 
-      // Send assignment emails if managers changed
-      const toNotify: Array<{email: string; full_name: string}> = [];
-      
-      if (
-        patch.assigned_account_manager_id &&
-        patch.assigned_account_manager_id !== initial?.assigned_account_manager_id
-      ) {
-        const am = accountManagers.find(m => m.id === patch.assigned_account_manager_id);
-        if (am) toNotify.push({ email: am.email, full_name: am.full_name });
-      }
-      
-      if (
-        patch.assigned_inbox_manager_id &&
-        patch.assigned_inbox_manager_id !== initial?.assigned_inbox_manager_id
-      ) {
-        const im = inboxManagers.find(m => m.id === patch.assigned_inbox_manager_id);
-        if (im) toNotify.push({ email: im.email, full_name: im.full_name });
-      }
+      // Email whoever is newly assigned (AM / IM / SDR), with standard CC
+      const clientInfo = { client_name: client.client_name, client_code: client.client_code, client_id: client.client_id, client_company_name: formData.client_company_name };
+      const newAssignments: Parameters<typeof notifyNewAssignments>[0] = [];
+      if (patch.assigned_account_manager_id && patch.assigned_account_manager_id !== initial?.assigned_account_manager_id)
+        newAssignments.push({ role: 'am', memberId: patch.assigned_account_manager_id, client: clientInfo });
+      if (patch.assigned_inbox_manager_id && patch.assigned_inbox_manager_id !== initial?.assigned_inbox_manager_id)
+        newAssignments.push({ role: 'im', memberId: patch.assigned_inbox_manager_id, client: clientInfo });
+      if (patch.assigned_sdr_id && patch.assigned_sdr_id !== (initial as any)?.assigned_sdr_id)
+        newAssignments.push({ role: 'sdr', memberId: patch.assigned_sdr_id, client: clientInfo });
+      notifyNewAssignments(newAssignments).catch((e) => console.warn('Assignment emails failed:', e));
 
-      const NO_SDR_SENTINEL = '00000000-0000-0000-0000-000000000000';
-      if (
-        patch.assigned_sdr_id &&
-        patch.assigned_sdr_id !== (initial as any)?.assigned_sdr_id &&
-        patch.assigned_sdr_id !== NO_SDR_SENTINEL
-      ) {
-        const sdr = sdrs.find(m => m.id === patch.assigned_sdr_id);
-        if (sdr) toNotify.push({ email: sdr.email, full_name: sdr.full_name });
-      }
-      
-      for (const tm of toNotify) {
-        try {
-          await sendAssignmentEmail({
-            to: tm.email,
-            subject: `Client assigned: ${client.client_name ?? client.client_code}`,
-            text: `Hi ${tm.full_name},\n\nYou have been assigned to a client.\n\nClient Name: ${client.client_name ?? "-"}\nClient Code: ${client.client_code}\nClient ID: ${client.client_id}\nCompany: ${formData.client_company_name ?? "-"}\nRelationship: ${formData.relationship_status ?? "-"} (${formData.relationship_type ?? "-"})\nWeekend Sending: ${formData.weekend_sending_mode ?? "-"}\n\nRegards,\nOperations`
-          });
-        } catch (emailError) {
-          console.warn('Failed to send assignment email:', emailError);
-        }
-      }
-
-      // Send target update notification to AM if any target field changed
+      // Target changes: email ONLY the account manager (with standard CC)
       const targetFields = ['weekly_target', 'weekly_target_launch_date', 'monthly_booking_goal', 'closelix', 'bonus_pool_monthly'];
       const changedTargets = targetFields.filter(f => f in patch);
-      if (changedTargets.length > 0 && client.assigned_account_manager_email) {
+      const amEmail = (data as any)?.assigned_account_manager_email ?? client.assigned_account_manager_email;
+      const amName = (data as any)?.assigned_account_manager_name ?? client.assigned_account_manager_name;
+      if (changedTargets.length > 0 && amEmail) {
         const { data: { user } } = await supabase.auth.getUser();
         const changedLines = changedTargets.map(f => {
           const oldVal = (normalizedInitial as any)?.[f] ?? '—';
           const newVal = (normalizedCurrent as any)?.[f] ?? '—';
           return `${f}: ${oldVal} → ${newVal}`;
         });
-        const ccList = ['atishay@eagleinfoservice.com', 'arjav@eagleinfoservice.com', 'pm@eagleinfoservice.com'];
-        const emailText = `Hi ${client.assigned_account_manager_name ?? 'Account Manager'},\n\nTargets have been updated for the following client.\n\nClient Name: ${client.client_name ?? "-"}\nClient Code: ${client.client_code}\nClient ID: ${client.client_id}\nCompany: ${formData.client_company_name ?? "-"}\n\nChanged targets:\n${changedLines.join('\n')}\n\nUpdated by: ${user?.email ?? 'Unknown'}\n\nRegards,\nOperations`;
+        const ccList = NOTIFY_CC;
+        const emailText = `Hi ${amName ?? "Account Manager"},\n\nTargets have been updated for the following client.\n\nClient Name: ${client.client_name ?? "-"}\nClient Code: ${client.client_code}\nClient ID: ${client.client_id}\nCompany: ${formData.client_company_name ?? "-"}\n\nChanged targets:\n${changedLines.join('\n')}\n\nUpdated by: ${user?.email ?? 'Unknown'}\n\nRegards,\nOperations`;
         sendAssignmentEmail({
-          to: client.assigned_account_manager_email,
+          to: amEmail,
           cc: ccList,
           subject: `Target updated for ${client.client_name ?? client.client_code}`,
           text: emailText,
