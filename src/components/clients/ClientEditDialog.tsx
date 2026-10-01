@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { listTeamMembers } from '@/lib/teamMembersData';
-import { sendAssignmentEmail } from '@/lib/email';
+import { sendAssignmentEmail, notifyNewAssignments, NOTIFY_CC } from "@/lib/email";
 import type { Client } from '@/types/database';
 import {
   Dialog,
@@ -254,9 +254,9 @@ export function ClientEditDialog({
           return `${f}: ${oldVal} → ${newVal}`;
         });
         const ccList = NOTIFY_CC;
-        const emailText = `Hi ${client.assigned_account_manager_name ?? 'Account Manager'},\n\nTargets have been updated for the following client.\n\nClient Name: ${client.client_name ?? "-"}\nClient Code: ${client.client_code}\nClient ID: ${client.client_id}\nCompany: ${formData.client_company_name ?? "-"}\n\nChanged targets:\n${changedLines.join('\n')}\n\nUpdated by: ${user?.email ?? 'Unknown'}\n\nRegards,\nOperations`;
+        const emailText = `Hi ${amName ?? "Account Manager"},\n\nTargets have been updated for the following client.\n\nClient Name: ${client.client_name ?? "-"}\nClient Code: ${client.client_code}\nClient ID: ${client.client_id}\nCompany: ${formData.client_company_name ?? "-"}\n\nChanged targets:\n${changedLines.join('\n')}\n\nUpdated by: ${user?.email ?? 'Unknown'}\n\nRegards,\nOperations`;
         sendAssignmentEmail({
-          to: client.assigned_account_manager_email,
+          to: amEmail,
           cc: ccList,
           subject: `Target updated for ${client.client_name ?? client.client_code}`,
           text: emailText,
