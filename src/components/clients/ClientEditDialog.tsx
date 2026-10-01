@@ -220,7 +220,7 @@ export function ClientEditDialog({
         return;
       }
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("clients")
         .update(patch)
         .eq("client_code", client.client_code)

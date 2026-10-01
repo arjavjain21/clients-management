@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { listTeamMembers } from '@/lib/teamMembersData';
 import { createClient, type CreateClientInput } from '@/lib/clientsData';
+import { notifyNewAssignments } from '@/lib/email';
 import {
   Dialog,
   DialogContent,
@@ -116,6 +117,12 @@ export function ClientCreateDialog({ open, onOpenChange }: ClientCreateDialogPro
     setSaving(true);
     try {
       const created = await createClient(form);
+      const info = { client_name: created.client_name, client_code: created.client_code, client_id: created.client_id, client_company_name: created.client_company_name };
+      notifyNewAssignments([
+        { role: 'am', memberId: created.assigned_account_manager_id, client: info },
+        { role: 'im', memberId: created.assigned_inbox_manager_id, client: info },
+        { role: 'sdr', memberId: created.assigned_sdr_id, client: info },
+      ]).catch((e) => console.warn('Assignment emails failed:', e));
       toast({
         title: 'Client created',
         description: `${created.client_name || created.client_code} added successfully.`,
