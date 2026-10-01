@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
 
     // Try Brevo first if configured
     let response: Response | null = null;
-    if (BREVO_API_KEY && BREVO_SENDER_EMAIL) {
+    if (!RESEND_API_KEY && BREVO_API_KEY && BREVO_SENDER_EMAIL) {
       console.log("Sending email via Brevo to:", to, ccField ? `(CC: ${cc.join(", ")})` : "");
       const brevoBody: Record<string, unknown> = {
         sender: { email: BREVO_SENDER_EMAIL, name: BREVO_SENDER_NAME },
