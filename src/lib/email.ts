@@ -44,7 +44,7 @@ export async function notifyNewAssignments(
     if (!m?.email) continue;
     const key = `${m.id}`;
     const line = `- ${a.client.client_name || '-'} (Code: ${a.client.client_code}, ID: ${a.client.client_id}${a.client.client_company_name ? `, Company: ${a.client.client_company_name}` : ''}) — as ${ROLE_LABEL[a.role]}`;
-    const g = grouped.get(key) ?? { member: m, lines: [], first: a.client.client_name || a.client.client_code };
+    const g = grouped.get(key) ?? { member: m, lines: [], first: `${a.client.client_code}${a.client.client_name ? ` – ${a.client.client_name}` : ""}` };
     g.lines.push(line);
     grouped.set(key, g);
   }
