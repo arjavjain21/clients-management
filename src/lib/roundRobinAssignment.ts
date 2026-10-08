@@ -54,7 +54,7 @@ export async function assignTeamMembersRoundRobin(client: any): Promise<RoundRob
     if (nextAM) {
       emailPromises.push(sendAssignmentEmail({
         to: nextAM.email,
-        subject: `New client assigned: ${client.client_name || client.client_code}`,
+        subject: `New client assigned: ${client.client_code}${client.client_name ? ` – ${client.client_name}` : ""}`,
         text: `Hi ${nextAM.full_name},
 
 You have been assigned as Account Manager to a new client.
@@ -75,7 +75,7 @@ Operations Team`
     if (nextIM) {
       emailPromises.push(sendAssignmentEmail({
         to: nextIM.email,
-        subject: `New client assigned: ${client.client_name || client.client_code}`,
+        subject: `New client assigned: ${client.client_code}${client.client_name ? ` – ${client.client_name}` : ""}`,
         text: `Hi ${nextIM.full_name},
 
 You have been assigned as Inbox Manager to a new client.

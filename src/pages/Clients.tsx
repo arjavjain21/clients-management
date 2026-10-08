@@ -301,7 +301,7 @@ export default function Clients() {
           return sendAssignmentEmail({
             to: clientInfo.am_email,
             cc: NOTIFY_CC,
-            subject: `Target updated for ${clientInfo.client_name || clientInfo.client_code}`,
+            subject: `Target updated for ${clientInfo.client_code}${clientInfo.client_name ? ` – ${clientInfo.client_name}` : ""}`,
             text: emailText,
           }).catch(e => console.warn('Failed to send bulk target email:', e));
         });

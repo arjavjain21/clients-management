@@ -258,7 +258,7 @@ export function ClientEditDialog({
         sendAssignmentEmail({
           to: amEmail,
           cc: ccList,
-          subject: `Target updated for ${client.client_name ?? client.client_code}`,
+          subject: `Target updated for ${client.client_code}${client.client_name ? ` – ${client.client_name}` : ""}`,
           text: emailText,
         }).catch((e) => console.warn('Failed to send target update email:', e));
       }
