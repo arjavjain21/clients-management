@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /** Always CC'd on assignment and target-change emails. */
-export const NOTIFY_CC = ['atishay@eagleinfoservice.com', 'arjav@eagleinfoservice.com', 'pm@eagleinfoservice.com'];
+export const NOTIFY_CC = ['atishay@eagleinfoservices.com', 'arjav@eagleinfoservice.com', 'pm@eagleinfoservice.com'];
 
 export async function sendAssignmentEmail({
   to,
