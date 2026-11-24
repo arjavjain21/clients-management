@@ -26,6 +26,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { Loader2, CalendarIcon } from 'lucide-react';
 import { RoundRobinAssignButton } from './RoundRobinAssignButton';
 import { CorrespondenceEmailsInput } from './CorrespondenceEmailsInput';
@@ -120,6 +121,7 @@ export function ClientEditDialog({
         bonus_pool_monthly: (client as any).bonus_pool_monthly ?? null,
         monthly_booking_goal: (client as any).monthly_booking_goal ?? null,
         closelix: (client as any).closelix ?? false,
+        send_internal_notification: (client as any).send_internal_notification ?? false,
         notes: (client as any).notes ?? '',
       });
     }
@@ -132,7 +134,7 @@ export function ClientEditDialog({
       const textFields = new Set<string>(['weekly_target', 'notes']);
       const dateFields = new Set<string>(['weekly_target_launch_date']);
       const arrayFields = new Set<string>(['correspondence_emails', 'correspondence_categories']);
-      const booleanFields = new Set(['onboarding_activated']);
+      const booleanFields = new Set(['onboarding_activated', 'send_internal_notification']);
       const uuidFields = new Set(['assigned_account_manager_id', 'assigned_inbox_manager_id', 'assigned_sdr_id']);
       const numericFields = new Set(['bonus_pool_monthly', 'monthly_booking_goal']);
       const boolFields2 = new Set(['closelix']);
@@ -647,6 +649,19 @@ export function ClientEditDialog({
 
           {/* Communications Tab */}
           <TabsContent value="comms" className="space-y-6 pt-4">
+            <div className="flex items-center justify-between gap-4 rounded-md border p-4">
+              <div className="space-y-1">
+                <Label htmlFor="send_internal_notification">Send internal notification</Label>
+                <p className="text-sm text-muted-foreground">
+                  Include this client in internal notifications.
+                </p>
+              </div>
+              <Switch
+                id="send_internal_notification"
+                checked={!!formData.send_internal_notification}
+                onCheckedChange={(checked) => setFormData({ ...formData, send_internal_notification: checked })}
+              />
+            </div>
             <div>
               <Label>Correspondence Emails</Label>
               <p className="text-sm text-muted-foreground mb-2">Allowed emails for client communications</p>

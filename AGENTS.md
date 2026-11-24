@@ -1,0 +1,1 @@
+Client notification defaults are enforced by an insert-only trigger on `public.clients` so later manual settings remain authoritative.

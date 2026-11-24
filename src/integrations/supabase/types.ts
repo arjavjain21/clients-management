@@ -85,6 +85,7 @@ export type Database = {
           recurring_cost_usd: number | null
           relationship_status: string | null
           relationship_type: string | null
+          send_internal_notification: boolean
           team_member_id: number | null
           updated_at: string
           website_canonical: string | null
@@ -127,6 +128,7 @@ export type Database = {
           recurring_cost_usd?: number | null
           relationship_status?: string | null
           relationship_type?: string | null
+          send_internal_notification?: boolean
           team_member_id?: number | null
           updated_at?: string
           website_canonical?: string | null
@@ -169,6 +171,7 @@ export type Database = {
           recurring_cost_usd?: number | null
           relationship_status?: string | null
           relationship_type?: string | null
+          send_internal_notification?: boolean
           team_member_id?: number | null
           updated_at?: string
           website_canonical?: string | null

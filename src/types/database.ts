@@ -36,6 +36,7 @@ export interface Client {
   closelix?: boolean;
   monthly_booking_goal?: number | null;
   notes?: string | null;
+  send_internal_notification?: boolean;
 }
 
 export interface TeamMember {
@@ -144,6 +145,7 @@ export interface ClientUpdateData {
   monthly_booking_goal?: number | null;
   closelix?: boolean | null;
   notes?: string | null;
+  send_internal_notification?: boolean;
 }
 
 export interface BulkUpdateData {
